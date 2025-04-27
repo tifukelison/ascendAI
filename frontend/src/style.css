@@ -1,0 +1,57 @@
+
+@import "tailwindcss";
+
+@tailwindcss base;
+@tailwindcss components;
+@tailwindcss utilities;
+
+@font-face {
+  font-family: 'Lato';
+  src: url(./fonts/Lato-Regular.ttf);
+}
+@font-face {
+  font-family: 'LatoBold';
+  src: url(./fonts/Lato-Black.ttf);
+}
+
+@font-face {
+  font-family: 'CrimsonPro';
+  src: url(./fonts/CrimsonPro.ttf);
+}
+body{ 
+
+  margin: 0;padding: 0; box-sizing: border-box;
+}
+
+:root {
+  font-family: 'Lato';
+  font-synthesis: none;
+  font-size: 17px;
+  color: #22252a;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --card-bg-light: #ffffff;
+  --text-color-light: #333333;
+  --card-bg-dark: #2d2d2d;
+  --text-color-dark: #ffffff;
+}
+
+
+/* Add these variables at root level */
+
+.dark-mode {
+  --card-bg: #2d2d2d;
+  --card-text: #ffffff;
+  --border-color: #404040;
+}
+.video-card {
+  background: var(--card-bg-light);
+  color: var(--text-color-light);
+}
+
+.dark-mode .video-card {
+  background: var(--card-bg-dark);
+  /* color: var(--text-color-dark); */
+}
+
