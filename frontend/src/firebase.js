@@ -18,6 +18,3 @@ const db = getFirestore(app);
 export default app;
 
 export { db, auth };
-
-console.log("API KEY:", import.meta.env.VITE_API_KEY);
-console.log(auth);
