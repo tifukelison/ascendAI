@@ -17,6 +17,7 @@ export default defineConfig({
       'firebase/app',
       'firebase/auth',
       'firebase/firestore',
+      'papaparse',
     ],
   },
   build: {
