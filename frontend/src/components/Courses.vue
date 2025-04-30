@@ -110,7 +110,7 @@
 import axios from 'axios';
 import { mapState } from 'vuex';
 import { getAuth } from '../firebase';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion, increment } from '../firebase';
 
 export default {
   name: 'Courses',
