@@ -140,7 +140,7 @@
 </template>
 
 <script>
-import { getAuth } from "firebase/auth";
+import { getAuth } from "../firebase";
 
 export default {
   name: 'DashBoard',
