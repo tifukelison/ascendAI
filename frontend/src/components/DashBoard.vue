@@ -48,7 +48,7 @@
 
       <!-- User Profile Section -->
       <div class="user-profile">
-        <img src="../assets/profile-placeholder.png" alt="Profile" class="profile-pic">
+        <img src="../assets/profile-placeholder.jpeg" alt="Profile" class="profile-pic">
         <div class="user-info">
           <div class="username">{{ userName }}</div>
           <div class="user-status">Pro Member</div>
@@ -122,7 +122,7 @@
             <!-- Repeat router-links from sidebar -->
           </nav>
           <div class="user-profile-mobile">
-            <img src="../assets/profile-placeholder.png" alt="Profile" class="profile-pic">
+            <img src="../assets/profile-placeholder.jpeg" alt="Profile" class="profile-pic">
             <div class="user-info">
               <div class="username">{{ userName }}</div>
               <div class="user-status">Pro Member</div>

@@ -109,7 +109,7 @@
 <script>
 import axios from 'axios';
 import { mapState } from 'vuex';
-import { getAuth } from '../firebase';
+import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
 
 export default {
