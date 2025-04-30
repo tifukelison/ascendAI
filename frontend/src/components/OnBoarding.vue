@@ -209,8 +209,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getAuth } from '../firebase'
-import { getFirestore, doc, setDoc } from '../firebase'
+import { getAuth } from 'firebase/auth'
+import { getFirestore, doc, setDoc } from 'firebase/firestore'
 import Papa from 'papaparse'
 
 

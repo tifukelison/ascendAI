@@ -60,8 +60,8 @@
 import app from '../firebase';
 import { ref } from "vue";
 import { computed } from 'vue';
-import { getAuth } from "../firebase";
-import { createUserWithEmailAndPassword, updateProfile } from "../firebase";
+import { getAuth } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { useRouter } from "vue-router";
 
 

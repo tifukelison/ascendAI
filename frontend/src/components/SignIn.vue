@@ -42,7 +42,7 @@
 <script>
 import app from '../firebase';
 import { ref, computed } from "vue";
-import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "../firebase";
+import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { useRouter } from "vue-router";
 
 export default {
