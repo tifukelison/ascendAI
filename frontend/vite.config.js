@@ -17,13 +17,13 @@ export default defineConfig({
       'firebase/app',
       'firebase/auth',
       'firebase/firestore',
-      
+      'papaparse',
     ],
   },
   build: {
     rollupOptions: {
       // Prevent Rollup from externalizing Firebase
-      external: ['papaparse'],
+      external: [],
     },},
   server: {
     proxy: {
