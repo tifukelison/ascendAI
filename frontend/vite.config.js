@@ -25,7 +25,7 @@ export default defineConfig({
       // Prevent Rollup from externalizing Firebase
       external: [],
     },
-    outDir: 'frontend/dist',
+    outDir: 'dist',
   },
   server: {
     

@@ -159,7 +159,7 @@
 
               <!-- Goal -->
               <div class="mb-6">
-                <h4 class="font-crimson text-xl text-dark mb-2">What’s your main goal right now?</h4>
+                <h4 class="font-crimson text-xl text-dark mb-2">What’s your main goal right now for your skill {{ formData.focusSkill ? formatSkillName(formData.focusSkill) : '' }}?</h4>
                 <input
                   type="text"
                   v-model="formData.goal"
@@ -186,21 +186,14 @@
 
               <!-- Phone Number -->
               <div class="mb-6">
-                <h4 class="font-crimson text-xl text-dark mb-2">What’s your phone number?</h4>
-                <div class="flex items-center">
-                  <span class="px-4 py-3 bg-gray-100 border-2 border-gray-300 border-r-0 rounded-l-lg font-lato text-dark">
-                    +237
-                  </span>
-                  <input
-                    type="tel"
-                    v-model="formData.phone"
-                    placeholder="Enter number"
-                    class="flex-1 p-3 border-2 border-gray-300 rounded-r-lg font-lato text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                    pattern="[0-9]{9}"
-                    required
-                  />
-                </div>
-                <small class="font-lato text-dark text-sm mt-2 block">9-digit Cameroon number (e.g., 612345678)</small>
+                <h4 class="font-crimson text-xl text-dark mb-2">What’s your phone number? (optional)</h4>
+                <input
+                  type="tel"
+                  v-model="formData.phone"
+                  placeholder="Enter phone number"
+                  class="w-full p-3 border-2 border-gray-300 rounded-lg font-lato text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                />
+                <small class="font-lato text-dark text-sm mt-2 block">Include country code (e.g., +1 for USA)</small>
               </div>
 
               <!-- About -->
@@ -281,7 +274,7 @@ const formData = ref({
   interests: [],
   goal: '',
   location: '',
-  phone: '',
+  phone: '', // Make phone optional
   about: '',
   profilePictureBase64: defaultProfilePictureBase64, // Initialize with default
   xp: 0,
@@ -302,6 +295,16 @@ const allInterests = ref([
   'God', 'Islam', 'Philosophy', 'Politics', 'Religion', 'Spirituality'
 ]);
 const levels = ref(['Beginner', 'Intermediate', 'Advanced']);
+
+// Load form data from localStorage if available
+onMounted(() => {
+  const savedFormData = localStorage.getItem('onboardingFormData');
+  if (savedFormData) {
+    formData.value = JSON.parse(savedFormData);
+    profilePicturePreview.value = formData.value.profilePictureBase64 || defaultProfilePictureBase64;
+  }
+  loadSkillsCSV();
+});
 
 // Formatters
 const formatSkillName = (skill) => {
@@ -333,10 +336,7 @@ const isCurrentStepValid = computed(() => {
     case 1:
       return formData.value.interests.length >= 1 && !!formData.value.goal;
     case 2:
-      return (
-        !!formData.value.location &&
-        /^[0-9]{9}$/.test(formData.value.phone)
-      );
+      return !!formData.value.location; // Phone is optional
     default:
       return true;
   }
@@ -347,10 +347,6 @@ const canAddSkill = computed(() => {
 });
 
 // Load skills from CSV
-onMounted(async () => {
-  await loadSkillsCSV();
-});
-
 const loadSkillsCSV = async () => {
   try {
     const response = await fetch('/skills.csv');
@@ -485,6 +481,9 @@ const nextStep = async () => {
     return;
   }
 
+  // Save form data to localStorage
+  localStorage.setItem('onboardingFormData', JSON.stringify(formData.value));
+
   if (currentStep.value === steps.value.length - 1) {
     await submitForm();
   } else {
@@ -520,7 +519,7 @@ const submitForm = async () => {
       interests: formData.value.interests || [],
       goal: formData.value.goal || '',
       location: formData.value.location || '',
-      phone: formData.value.phone || '',
+      phone: formData.value.phone || '', // Phone is optional
       about: formData.value.about || '',
       profilePictureBase64: formData.value.profilePictureBase64 || null,
       xp: 0,
@@ -537,6 +536,7 @@ const submitForm = async () => {
 
     console.log('User document to save:', JSON.stringify(userDoc, null, 2));
     await setDoc(doc(db, 'users', user.uid), userDoc);
+    localStorage.removeItem('onboardingFormData'); // Clear localStorage after successful submission
     router.push('/dashboard');
   } catch (err) {
     console.error('Error saving user data:', err);

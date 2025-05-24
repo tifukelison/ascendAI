@@ -14,11 +14,15 @@ import Resources from './components/Resources.vue';
 import Analytics from './components/Analytics.vue';
 import Admin from './components/Admin.vue';
 import DashboardHome from './components/DashboardHome.vue';
+import Contact from './components/Contact.vue';
+import AboutUs from './components/AboutUs.vue';
 const routes = [
   { path: '/', name: 'LandingPage', component: LandingPage },
   { path: '/onboarding', component: OnBoarding },
   { path: '/signup', name: 'Signup', component: SignUp },
   { path: '/signin', component: SignIn },
+  { path: '/contact', component: Contact },
+  {path: '/about', component: AboutUs },
   { path: '/dashboard', component: DashBoard,
   children: [
     { path: 'course', component: Courses },

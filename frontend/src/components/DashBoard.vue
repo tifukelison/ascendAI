@@ -4,7 +4,8 @@
     <div
       :class="[
         'sidebar fixed top-0 left-0 h-full bg-white border-r border-gray-200 transition-all duration-300 z-20',
-        isSidebarExpanded ? 'w-64' : 'w-20'
+        isSidebarExpanded ? 'w-64' : 'w-20',
+        isMobile && !mobileMenuOpen ? '-translate-x-full' : 'translate-x-0'
       ]"
     >
       <!-- Top Section -->
@@ -31,14 +32,15 @@
             'bg-gray-800 text-white hover:bg-gray-900': isActiveTab(item.path),
             'justify-center': !isSidebarExpanded
           }"
+          @click="isMobile && toggleMobileMenu"
         >
           <component
             :is="item.icon"
             class="w-5 h-5"
             :class="[
-      isSidebarExpanded ? 'w-5 h-5' : 'w-9 h-9', // Adjust icon size
-      { 'mr-2': isSidebarExpanded }
-    ]"
+              'w-5 h-5', // Maintain icon size
+              { 'mr-2': isSidebarExpanded }
+            ]"
           />
           <span v-if="isSidebarExpanded">{{ item.name }}</span>
         </router-link>
@@ -50,6 +52,7 @@
           to="/dashboard/settings"
           class="flex items-center px-4 py-2 text-gray-800 rounded-md hover:bg-gray-100 transition-colors"
           :class="{ 'justify-center': !isSidebarExpanded }"
+          @click="isMobile && toggleMobileMenu"
         >
           <svg
             class="w-5 h-5"
@@ -113,7 +116,7 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M9 5l7 7-7 7"
+                d="M4 6h16M4 12h16M4 18h16"
               />
             </svg>
           </button>
@@ -455,9 +458,10 @@ export default {
       return this.$route.path === path;
     },
     toggleSidebar() {
-      this.isSidebarExpanded = !this.isSidebarExpanded;
       if (this.isMobile) {
         this.mobileMenuOpen = !this.mobileMenuOpen;
+      } else {
+        this.isSidebarExpanded = !this.isSidebarExpanded;
       }
     },
     toggleMobileMenu() {
@@ -539,7 +543,7 @@ export default {
 
 /* Sidebar Styles */
 .sidebar {
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, transform 0.3s ease;
 }
 
 @media (max-width: 768px) {

@@ -1,6 +1,6 @@
 require('dotenv').config();
 import { LangflowClient } from "@datastax/langflow-client";
-import { InputTyp es, OutputTypes } from "@datastax/langflow-client/consts";
+import { InputTypes, OutputTypes } from "@datastax/langflow-client/consts";
 
 
 

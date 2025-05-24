@@ -1,4 +1,3 @@
-<!-- /frontend/src/components/Leaderboard.vue -->
 <template>
   <div class="min-h-screen relative">
     <!-- Background Grid -->
@@ -84,22 +83,22 @@
       <div class="user-preview mb-8 p-6 rounded-lg border border-gray-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-4">
           <img
-            :src="currentUser.profilePicture || 'https://via.placeholder.com/60'"
+            :src="topUser.profilePictureBase64 || 'https://via.placeholder.com/60'"
             alt="User Profile"
             class="w-16 h-16 rounded-full border-2 border-white shadow-md object-cover"
           />
           <div>
-            <p class="font-lato font-bold text-gray-800">{{ currentUser.name || 'User' }}</p>
+            <p class="font-lato font-bold text-gray-800">{{ topUser.name || 'User' }}</p>
             <p class="font-lato text-sm text-gray-600 flex items-center">
-              <span class="fi mr-2" :class="getCountryFlag(currentUser.location)"></span>
-              {{ currentUser.location || 'N/A' }}
+              <span class="fi mr-2" :class="getCountryFlag(topUser.location)"></span>
+              {{ topUser.location || 'N/A' }}
             </p>
           </div>
         </div>
         <div class="border-l border-gray-200 h-12 hidden sm:block"></div>
         <div class="text-center">
           <p class="font-lato text-gray-800">XP</p>
-          <p class="font-lato font-bold text-[#fe572a]">{{ currentUser.xp || 0 }}</p>
+          <p class="font-lato font-bold text-[#fe572a]">{{ topUser.xp || 0 }}</p>
         </div>
         <div class="border-l border-gray-200 h-12 hidden sm:block"></div>
         <div class="text-center">
@@ -116,23 +115,23 @@
       <div v-if="error" class="p-6 rounded-lg border border-red-200 shadow-sm mb-8 text-center">
         <p class="font-lato text-red-600">{{ error }}</p>
       </div>
-      <div v-else-if="!isLoading && filteredLeaderboard.length === 0" class="p-6 rounded-lg border border-gray-200 shadow-sm mb-8 text-center">
+      <div v-else-if="!isLoading && paginatedLeaderboard.length === 0" class="p-6 rounded-lg border border-gray-200 shadow-sm mb-8 text-center">
         <p class="font-lato text-gray-600">No users found on the leaderboard. Be the first to join!</p>
       </div>
 
       <!-- Leaderboard Table -->
       <div v-else class="leaderboard-table p-6 rounded-lg border border-gray-200 shadow-sm">
-        <div class="grid grid-cols-5 gap-4 font-lato font-bold text-gray-800 mb-4">
+        <div class="grid grid-cols-6 gap-4 font-lato font-bold text-gray-800 mb-4">
           <div>Ranking</div>
           <div class="col-span-2">Profile</div>
           <div>Country</div>
-          <div>Social</div>
           <div>Skills</div>
+          <div>XP</div>
         </div>
         <div
-          v-for="(user, index) in filteredLeaderboard"
+          v-for="(user, index) in paginatedLeaderboard"
           :key="user.id"
-          class="grid grid-cols-5 gap-4 items-center p-4 rounded-lg"
+          class="grid grid-cols-6 gap-4 items-center p-4 rounded-lg"
           :class="{ 'bg-gray-50': index % 2 === 0, 'bg-white': index % 2 !== 0, 'hover:bg-gray-100 cursor-pointer': true }"
           @click="showUserProfile(user)"
         >
@@ -141,13 +140,13 @@
             <span v-if="index === 0" class="fas fa-medal text-yellow-400 mr-2"></span>
             <span v-else-if="index === 1" class="fas fa-medal text-gray-400 mr-2"></span>
             <span v-else-if="index === 2" class="fas fa-medal text-orange-400 mr-2"></span>
-            <span v-else class="font-lato text-gray-800">#{{ index + 1 }}</span>
+            <span v-else class="font-lato text-gray-800">#{{ index + 1 + (currentPage - 1) * itemsPerPage }}</span>
           </div>
 
           <!-- Profile -->
           <div class="col-span-2 flex items-center gap-4">
             <img
-              :src="user.profilePicture || 'https://via.placeholder.com/40'"
+              :src="user.profilePictureBase64 || 'https://via.placeholder.com/40'"
               alt="User Profile"
               class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover"
             />
@@ -164,65 +163,43 @@
             <p class="font-lato text-sm text-gray-600">{{ user.location || 'N/A' }}</p>
           </div>
 
-          <!-- Social -->
-          <div class="flex gap-2 justify-center">
-            <a
-              v-if="user.social?.twitter"
-              :href="user.social.twitter"
-              target="_blank"
-              class="text-gray-600 hover:text-[#fe572a]"
-            >
-              <i class="fab fa-x-twitter"></i>
-              <span v-if="user.social.twitterFollowers" class="ml-1 text-xs">{{ formatNumber(user.social.twitterFollowers) }}</span>
-            </a>
-            <a
-              v-if="user.social?.linkedin"
-              :href="user.social.linkedin"
-              target="_blank"
-              class="text-gray-600 hover:text-[#fe572a]"
-            >
-              <i class="fab fa-linkedin"></i>
-              <span v-if="user.social.linkedinFollowers" class="ml-1 text-xs">{{ formatNumber(user.social.linkedinFollowers) }}</span>
-            </a>
-            <a
-              v-if="user.social?.github"
-              :href="user.social.github"
-              target="_blank"
-              class="text-gray-600 hover:text-[#fe572a]"
-            >
-              <i class="fab fa-github"></i>
-              <span v-if="user.social.githubFollowers" class="ml-1 text-xs">{{ formatNumber(user.social.githubFollowers) }}</span>
-            </a>
-          </div>
-
           <!-- Skills -->
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap gap-2 justify-center">
             <span
+              v-for="skill in user.skills"
+              :key="skill"
               class="bg-[#fe572a] text-white font-lato text-xs px-2 py-1 rounded-full"
             >
-              {{ user.focusSkill || 'N/A' }}
+              {{ skill }}
             </span>
-            <button
-              v-if="user.skills?.length > 1"
-              @click.stop="toggleSkills(user.id)"
-              class="text-gray-600 hover:text-[#fe572a]"
-            >
-              +{{ user.skills.length - 1 }}
-            </button>
-            <div
-              v-if="expandedSkills[user.id]"
-              class="absolute bg-white border border-gray-200 rounded-lg p-2 shadow-md mt-2"
-            >
-              <span
-                v-for="skill in user.skills.slice(1)"
-                :key="skill"
-                class="block font-lato text-sm text-gray-600"
-              >
-                {{ skill }}
-              </span>
-            </div>
+          </div>
+
+          <!-- XP -->
+          <div class="text-center">
+            <p class="font-lato text-gray-800">{{ user.xp }}</p>
           </div>
         </div>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="flex justify-center mt-6">
+        <button
+          @click="prevPage"
+          :disabled="currentPage === 1"
+          class="font-lato font-bold py-2 px-4 rounded-l transition-all duration-200"
+          :class="currentPage === 1 ? 'bg-gray-200 text-gray-800 cursor-not-allowed' : 'bg-[#fe572a] text-white hover:bg-[#ff8c63]'"
+        >
+          Prev
+        </button>
+        <span class="px-4 py-2 text-gray-700 bg-gray-100 font-lato">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button
+          @click="nextPage"
+          :disabled="currentPage === totalPages"
+          class="font-lato font-bold py-2 px-4 rounded-r transition-all duration-200"
+          :class="currentPage === totalPages ? 'bg-gray-200 text-gray-800 cursor-not-allowed' : 'bg-[#fe572a] text-white hover:bg-[#ff8c63]'"
+        >
+          Next
+        </button>
       </div>
 
       <!-- Profile Sidebar -->
@@ -242,7 +219,7 @@
           </div>
           <div v-if="selectedUser" class="profile-content flex flex-col items-center w-full">
             <img
-              :src="selectedUser.profilePicture || 'https://via.placeholder.com/80'"
+              :src="selectedUser.profilePictureBase64 || 'https://via.placeholder.com/80'"
               alt="User Profile"
               class="w-20 h-20 rounded-full border-2 border-white shadow-md object-cover mb-4"
             />
@@ -255,34 +232,34 @@
             <p class="font-lato text-gray-800 mb-2"><span class="font-semibold">Focus Skill:</span> {{ selectedUser.focusSkill || 'N/A' }}</p>
             <p v-if="selectedUser.about" class="font-lato text-gray-600 text-sm text-center mb-4">{{ selectedUser.about }}</p>
             <div class="flex gap-4 mb-4">
-              <a
-                v-if="selectedUser.social?.twitter"
-                :href="selectedUser.social.twitter"
-                target="_blank"
-                class="text-gray-600 hover:text-[#fe572a]"
-              >
-                <i class="fab fa-x-twitter text-xl"></i>
-                <span v-if="selectedUser.social.twitterFollowers" class="ml-1 text-xs">{{ formatNumber(selectedUser.social.twitterFollowers) }}</span>
-              </a>
-              <a
-                v-if="selectedUser.social.linkedin"
-                :href="selectedUser.social.linkedin"
-                target="_blank"
-                class="text-gray-600 hover:text-[#fe572a]"
-              >
-                <i class="fab fa-linkedin text-xl"></i>
-                <span v-if="selectedUser.social.linkedinFollowers" class="ml-1 text-xs">{{ formatNumber(selectedUser.social.linkedinFollowers) }}</span>
-              </a>
-              <a
-                v-if="selectedUser.social.github"
-                :href="selectedUser.social.github"
-                target="_blank"
-                class="text-gray-600 hover:text-[#fe572a]"
-              >
-                <i class="fab fa-github text-xl"></i>
-                <span v-if="selectedUser.social.githubFollowers" class="ml-1 text-xs">{{ formatNumber(selectedUser.social.githubFollowers) }}</span>
-              </a>
-            </div>
+  <a
+    v-if="selectedUser.social?.twitter"
+    :href="selectedUser.social.twitter"
+    target="_blank"
+    class="text-gray-600 hover:text-[#fe572a]"
+  >
+    <i class="fab fa-x-twitter text-xl"></i>
+    <span v-if="selectedUser.social?.twitterFollowers" class="ml-1 text-xs">{{ formatNumber(selectedUser.social.twitterFollowers) }}</span>
+  </a>
+  <a
+    v-if="selectedUser.social?.linkedin"
+    :href="selectedUser.social.linkedin"
+    target="_blank"
+    class="text-gray-600 hover:text-[#fe572a]"
+  >
+    <i class="fab fa-linkedin text-xl"></i>
+    <span v-if="selectedUser.social?.linkedinFollowers" class="ml-1 text-xs">{{ formatNumber(selectedUser.social.linkedinFollowers) }}</span>
+  </a>
+  <a
+    v-if="selectedUser.social?.github"
+    :href="selectedUser.social.github"
+    target="_blank"
+    class="text-gray-600 hover:text-[#fe572a]"
+  >
+    <i class="fab fa-github text-xl"></i>
+    <span v-if="selectedUser.social?.githubFollowers" class="ml-1 text-xs">{{ formatNumber(selectedUser.social.githubFollowers) }}</span>
+  </a>
+</div>
             <div class="flex flex-wrap gap-2 justify-center">
               <span
                 v-for="skill in selectedUser.skills"
@@ -322,11 +299,16 @@ export default {
     const selectedLocation = ref('Worldwide');
     const expandedSkills = ref({});
     const currentUser = ref({
-      profilePicture: null,
+      profilePictureBase64: null,
       name: 'User',
       location: null,
       xp: 0,
     });
+    const topUser = ref({});
+
+    // Pagination
+    const currentPage = ref(1);
+    const itemsPerPage = ref(10); // Define and initialize itemsPerPage
 
     // Mock available skills and countries (replace with actual data from Firestore if available)
     const availableSkills = ref(['JavaScript', 'Python', 'Java', 'Web Development', 'Data Science']);
@@ -341,9 +323,19 @@ export default {
       });
     });
 
+    // Paginated leaderboard
+    const paginatedLeaderboard = computed(() => {
+      const start = (currentPage.value - 1) * itemsPerPage.value;
+      const end = start + itemsPerPage.value;
+      return filteredLeaderboard.value.slice(start, end);
+    });
+
+    const totalPages = computed(() => {
+      return Math.ceil(filteredLeaderboard.value.length / itemsPerPage.value);
+    });
+
     // Fetch leaderboard data
     const fetchLeaderboard = async () => {
-      console.log('Fetching global leaderboard...');
       isLoading.value = true;
       error.value = null;
 
@@ -359,7 +351,7 @@ export default {
             id: docSnap.id,
             name: userData.name || 'Unknown',
             xp: userData.xp || 0,
-            profilePicture: userData.profilePicture || null,
+            profilePictureBase64: userData.profilePictureBase64 || null,
             focusSkill: userData.focusSkill || null,
             skills: userData.skills || [],
             location: userData.location || null,
@@ -369,7 +361,7 @@ export default {
         }
 
         leaderboardData.value = leaderboard;
-        console.log('Leaderboard data:', leaderboardData.value);
+        topUser.value = leaderboard[0] || {};
 
         if (leaderboard.length === 0) {
           error.value = 'No users found on the leaderboard. Be the first to join!';
@@ -387,7 +379,7 @@ export default {
     const fetchCurrentUser = async () => {
       // Replace with actual auth user fetching logic
       currentUser.value = {
-        profilePicture: 'https://via.placeholder.com/60',
+        profilePictureBase64: 'https://via.placeholder.com/60',
         name: 'John Doe',
         location: 'USA',
         xp: 1500,
@@ -396,7 +388,6 @@ export default {
 
     // Fetch user profile for sidebar
     const fetchUserProfile = async (userId) => {
-      console.log('Fetching profile for user:', userId);
       try {
         const userRef = doc(db, 'users', userId);
         const userSnap = await getDoc(userRef);
@@ -404,7 +395,6 @@ export default {
         if (userSnap.exists()) {
           selectedUser.value = { id: userSnap.id, ...userSnap.data() };
           showProfileSidebar.value = true;
-          console.log('Selected user:', selectedUser.value);
         } else {
           console.error('User not found:', userId);
           showNotificationModal('User profile not found.', 'error');
@@ -464,6 +454,18 @@ export default {
       showNotification.value = false;
     };
 
+    const prevPage = () => {
+      if (currentPage.value > 1) {
+        currentPage.value--;
+      }
+    };
+
+    const nextPage = () => {
+      if (currentPage.value < totalPages.value) {
+        currentPage.value++;
+      }
+    };
+
     onMounted(() => {
       fetchLeaderboard();
       fetchCurrentUser();
@@ -472,6 +474,9 @@ export default {
     return {
       leaderboardData,
       filteredLeaderboard,
+      paginatedLeaderboard,
+      totalPages,
+      currentPage,
       selectedUser,
       showProfileSidebar,
       isLoading,
@@ -485,6 +490,7 @@ export default {
       availableCountries,
       expandedSkills,
       currentUser,
+      topUser,
       showUserProfile,
       closeProfileSidebar,
       resetFilters,
@@ -493,6 +499,9 @@ export default {
       formatNumber,
       showNotificationModal,
       dismissNotification,
+      prevPage,
+      nextPage,
+      itemsPerPage, // Ensure itemsPerPage is returned
     };
   },
 };
@@ -545,8 +554,8 @@ export default {
 }
 
 /* Leaderboard Table */
-.leaderboard-table .grid-cols-5 {
-  grid-template-columns: 1fr 3fr 1fr 1fr 1fr;
+.leaderboard-table .grid-cols-6 {
+  grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
 }
 
 /* Responsive Adjustments */
@@ -566,7 +575,7 @@ export default {
   .user-preview .border-l {
     display: none;
   }
-  .leaderboard-table .grid-cols-5 {
+  .leaderboard-table .grid-cols-6 {
     grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
   }
   .profile-sidebar {
