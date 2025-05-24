@@ -1,200 +1,248 @@
 <template>
-  <div v-if="isLoading" class="loader-overlay">
-    <div class="loader"></div>
+  <div v-if="isLoading" class="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
+    <div class="w-12 h-12 border-4 border-t-primary border-gray-200 rounded-full animate-spin"></div>
   </div>
-  <div class="container">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <div class="left-column">
-      <h1>Your career, sped up with AI</h1>
-      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-      <div class="placeholder-box"></div>
+  <div class="flex flex-col md:flex-row p-6 md:p-10 min-h-screen">
+    <!-- Left Column -->
+    <div class="md:sticky md:top-10 flex-1 p-5 md:mr-10 mb-6 md:mb-0">
+      <h1 class="font-crimson text-3xl md:text-4xl text-dark mb-4">Your career, sped up with AI</h1>
+      <p class="font-lato text-dark text-base md:text-lg">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+      </p>
+      <div class="h-48 bg-gray-200 rounded-lg mt-6"></div>
     </div>
-    <div class="right-column">
-      <div class="onboarding-container">
+
+    <!-- Right Column -->
+    <div class="flex-1 p-5">
+      <div class="max-w-xl mx-auto">
         <!-- Progress Line -->
-        <div class="progress-line">
-          <div class="progress-track">
-            <div 
-              class="progress-fill"
+        <div class="flex items-center mb-8">
+          <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              class="h-full bg-primary transition-all duration-500 ease-in-out"
               :style="{ width: `${Math.round(((currentStep + 1) / steps.length) * 100)}%` }"
             ></div>
           </div>
-          <span class="progress-text">
+          <span class="ml-4 font-lato font-bold text-primary">
             {{ Math.round(((currentStep + 1) / steps.length) * 100) }}%
           </span>
         </div>
 
-        <!-- Question Wrapper -->
+        <!-- Error Message -->
+        <div v-if="error" class="bg-red-100 text-red-700 font-lato p-4 rounded-lg mb-4">
+          {{ error }}
+        </div>
+
+        <!-- Form Steps -->
         <transition name="fade" mode="out-in">
-          <div :key="currentStep" class="mb-4">
-            <!-- Step 1: Skills -->
+          <div :key="currentStep" class="mb-6">
+            <!-- Step 1: Name, Skills, Focus Skill, Level -->
             <div v-if="currentStep === 0">
-              <h4>What are your top skills? (Max 10)</h4>
-              <div class="skill-selector">
-                <div class="selected-skills">
+              <!-- Name -->
+              <div class="mb-6">
+                <h4 class="font-crimson text-xl text-dark mb-2">What’s your name?</h4>
+                <input
+                  type="text"
+                  v-model="formData.name"
+                  placeholder="Your name..."
+                  class="w-full p-3 border-2 border-gray-300 rounded-lg font-lato text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  required
+                />
+              </div>
+
+              <!-- Skills -->
+              <div class="mb-6">
+                <h4 class="font-crimson text-xl text-dark mb-2">What are your top skills? (Max 10)</h4>
+                <div class="flex flex-wrap gap-2 mb-4">
                   <span
                     v-for="(skill, index) in formData.skills"
                     :key="index"
-                    class="skill-tag"
+                    class="inline-block px-4 py-2 bg-gray-100 border border-gray-300 rounded-full font-lato text-sm text-dark cursor-pointer hover:bg-gray-200 transition-all"
                     @click="removeSkill(skill)"
                   >
                     {{ formatSkillName(skill) }}
                   </span>
-                  <p v-if="formData.skills.length >= 10" class="max-skills">
+                  <p v-if="formData.skills.length >= 10" class="text-primary font-lato text-sm mt-2">
                     You've reached the max of 10 skills.
                   </p>
                 </div>
-                <div class="skill-input-container">
+                <div class="relative">
                   <input
                     type="text"
                     v-model="skillSearch"
                     placeholder="Type a skill..."
                     @input="searchSkills"
                     @keydown.enter.prevent="handleAddSkill"
-                    class="skill-input"
+                    class="w-full p-3 border-2 border-primary rounded-full font-lato text-dark focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                   <button
-                    class="add-skill-button"
+                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary transition-all"
                     @click="handleAddSkill"
                     :disabled="!canAddSkill || !skillSearch.trim()"
                   >
                     <i class="fas fa-plus"></i>
                   </button>
                 </div>
-
                 <transition name="fade">
-                  <ul v-if="filteredSkills.length && skillSearch" class="skill-suggestions">
+                  <ul v-if="filteredSkills.length && skillSearch" class="absolute w-full max-h-48 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg z-10 mt-1 p-0 list-none">
                     <li
                       v-for="(skill, index) in filteredSkills"
                       :key="index"
                       @click="selectSkill(skill)"
+                      class="p-3 cursor-pointer hover:bg-gray-100 font-lato text-dark transition-all"
                     >
                       {{ formatSkillName(skill) }}
                     </li>
                   </ul>
                 </transition>
               </div>
+
+              <!-- Focus Skill -->
+              <div class="mb-6" v-if="formData.skills.length > 0">
+                <h4 class="font-crimson text-xl text-dark mb-2">Which skill do you want to focus on most?</h4>
+                <div class="flex flex-wrap gap-2">
+                  <span
+                    v-for="(skill, index) in formData.skills"
+                    :key="index"
+                    @click="formData.focusSkill = skill"
+                    class="inline-block px-4 py-2 border rounded-full font-lato text-sm cursor-pointer transition-all"
+                    :class="{
+                      'bg-[#fe572a] text-white border-primary': formData.focusSkill === skill,
+                      'bg-gray-100 border-gray-300 text-dark hover:bg-gray-200': formData.focusSkill !== skill
+                    }"
+                  >
+                    {{ formatSkillName(skill) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Level -->
+              <div class="mb-6" v-if="formData.focusSkill">
+                <h4 class="font-crimson text-xl text-dark mb-2">What’s your current experience level?</h4>
+                <div class="flex flex-wrap gap-2">
+                  <span
+                    v-for="level in levels"
+                    :key="level"
+                    @click="formData.level = level"
+                    class="inline-block px-4 py-2 border rounded-full font-lato text-sm cursor-pointer transition-all"
+                    :class="{
+                      'bg-[#fe572a] text-white border-primary': formData.level === level,
+                      'bg-gray-100 border-gray-300 text-dark hover:bg-gray-200': formData.level !== level
+                    }"
+                  >
+                    {{ level }}
+                  </span>
+                </div>
+              </div>
             </div>
 
-              <!-- Step 2: Focus Skill -->
-        <div v-else-if="currentStep === 1">
-          <h4>Which skill do you want to focus on most?</h4>
-         <div class="input-wrapper"> 
-          <select class="form-select input" v-model="formData.focusSkill" required>
-            <option disabled value="">Select one</option>
-            <option v-for="(skill, index) in formData.skills" :key="index" :value="skill">
-              {{ skill }}
-            </option>
-          </select>
-        </div></div>
+            <!-- Step 2: Interests, Goal -->
+            <div v-else-if="currentStep === 1">
+              <!-- Interests -->
+              <div class="mb-6">
+                <h4 class="font-crimson text-xl text-dark mb-2">What are your interests?</h4>
+                <div class="flex flex-wrap gap-2">
+                  <span
+                    v-for="interest in allInterests"
+                    :key="interest"
+                    @click="toggleInterest(interest)"
+                    class="inline-block px-4 py-2 border rounded-full font-lato text-sm cursor-pointer transition-all"
+                    :class="{
+                      'bg-[#fe572a] text-white border-primary': formData.interests?.includes(interest),
+                      'bg-gray-100 border-gray-300 text-dark hover:bg-gray-200': !formData.interests?.includes(interest)
+                    }"
+                  >
+                    {{ formatInterestName(interest) }}
+                  </span>
+                </div>
+              </div>
 
-<!-- Step 3: Level -->
-<div v-else-if="currentStep === 2">
-  <h4>What's your current experience level?</h4>
-  <div class="input-wrapper">
-    <select 
-      class="form-select input" 
-      v-model="formData.level" 
-      required
-    >
-      <option disabled value="">Choose</option>
-      <option>Beginner</option>
-      <option>Intermediate</option>
-      <option>Advanced</option>
-    </select>
-  </div>
-</div>
+              <!-- Goal -->
+              <div class="mb-6">
+                <h4 class="font-crimson text-xl text-dark mb-2">What’s your main goal right now?</h4>
+                <input
+                  type="text"
+                  v-model="formData.goal"
+                  placeholder="Your goal..."
+                  class="w-full p-3 border-2 border-gray-300 rounded-lg font-lato text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  required
+                />
+              </div>
+            </div>
 
-<!-- Step 4: Interests -->
-<div v-else-if="currentStep === 3">
-  <h4>What are your interests?</h4>
-  <div class="interests-container">
-    <span 
-      v-for="interest in allInterests" 
-      :key="interest" 
-      class="interest-badge"
-      :class="{ 'selected': formData.interests?.includes(interest) }" 
-      @click="toggleInterest(interest)"
-    >
-      {{ formatInterestName(interest) }}
-    </span>
-  </div>
-</div>
+            <!-- Step 3: Location, Phone Number, About, Profile Picture -->
+            <div v-else-if="currentStep === 2">
+              <!-- Location -->
+              <div class="mb-6">
+                <h4 class="font-crimson text-xl text-dark mb-2">Where are you based?</h4>
+                <input
+                  type="text"
+                  v-model="formData.location"
+                  placeholder="Your city or region"
+                  class="w-full p-3 border-2 border-gray-300 rounded-lg font-lato text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  required
+                />
+              </div>
 
-<!-- Step 5: Goal -->
-<div v-else-if="currentStep === 4">
-  <h4>What's your main goal right now?</h4>
-  <div class="input-wrapper">
-    <input
-      type="text"
-      class="styled-input"
-      v-model="formData.goal"
-      placeholder="Your goal..."
-      required
-    />
-  </div>
-</div>
+              <!-- Phone Number -->
+              <div class="mb-6">
+                <h4 class="font-crimson text-xl text-dark mb-2">What’s your phone number?</h4>
+                <div class="flex items-center">
+                  <span class="px-4 py-3 bg-gray-100 border-2 border-gray-300 border-r-0 rounded-l-lg font-lato text-dark">
+                    +237
+                  </span>
+                  <input
+                    type="tel"
+                    v-model="formData.phone"
+                    placeholder="Enter number"
+                    class="flex-1 p-3 border-2 border-gray-300 rounded-r-lg font-lato text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    pattern="[0-9]{9}"
+                    required
+                  />
+                </div>
+                <small class="font-lato text-dark text-sm mt-2 block">9-digit Cameroon number (e.g., 612345678)</small>
+              </div>
 
-<!-- Step 6: Location -->
-<div v-else-if="currentStep === 5">
-  <h4>Where are you based?</h4>
-  <div class="input-wrapper">
-    <input
-      type="text"
-      class="styled-input"
-      v-model="formData.location"
-      placeholder="Your city or region"
-      required
-    />
-  </div>
-</div>
+              <!-- About -->
+              <div class="mb-6">
+                <h4 class="font-crimson text-xl text-dark mb-2">Tell us something about you (optional)</h4>
+                <textarea
+                  v-model="formData.about"
+                  placeholder="Say something cool..."
+                  rows="4"
+                  class="w-full p-3 border-2 border-gray-300 rounded-lg font-lato text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-y"
+                ></textarea>
+              </div>
 
-<!-- Step 7: Phone Number -->
-<div v-else-if="currentStep === 6">
-  <h4>What's your phone number?</h4>
-  <div class="input-wrapper">
-    <div class="phone-input-group">
-      <span class="country-code">+237</span>
-      <input
-        type="tel"
-        class="inputs"
-        v-model="formData.phone"
-        placeholder="Enter number"
-        pattern="[0-9]{9}"
-        required
-      />
-    </div>
-    <small class="hint-text">9-digit Cameroon number (e.g. 612345678)</small>
-  </div>
-</div>
+              <!-- Profile Picture -->
+              <div class="mb-6">
+                <h4 class="font-crimson text-xl text-dark mb-2">Upload a profile picture (optional)</h4>
+                <input
+                  type="file"
+                  accept="image/*"
+                  @change="handleProfilePictureUpload"
+                  class="w-full p-3 border-2 border-gray-300 rounded-lg font-lato text-dark focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                />
+                <div class="mt-4">
+                  <img :src="profilePicturePreview" alt="Profile Picture Preview" class="w-32 h-32 rounded-full object-cover" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </transition>
 
-<!-- Step 8: About -->
-<div v-else-if="currentStep === 7">
-  <h4>Tell us something about you (optional)</h4>
-  <div class="input-wrapper">
-    <textarea
-      class="styled-textarea"
-      v-model="formData.about"
-      rows="4"
-      placeholder="Say something cool..."
-    ></textarea>
-  </div>
-</div>
-</div>
-</transition>
-
-        <!-- Navigation Buttons at bottom -->
-        <div class="navigation-buttons">
-          <button 
-            class="nav-button back-button" 
-            @click="prevStep" 
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between mt-10">
+          <button
+            class="px-6 py-3 bg-gray-100 border border-gray-300 rounded-full font-lato text-dark hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="prevStep"
             :disabled="currentStep === 0"
           >
             Back
           </button>
-          <button 
-            class="nav-button next-button" 
-            @click="nextStep" 
+          <button
+            class="px-6 py-3 bg-[#fe572a] text-white rounded-full font-lato hover:bg-opacity-90 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+            @click="nextStep"
             :disabled="!isCurrentStepValid"
           >
             {{ currentStep === steps.length - 1 ? 'Finish' : 'Next' }}
@@ -202,574 +250,314 @@
         </div>
       </div>
     </div>
- </div>
+  </div>
 </template>
 
-
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { getAuth } from 'firebase/auth'
-import { getFirestore, doc, setDoc } from 'firebase/firestore'
-import Papa from 'papaparse'
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { getAuth } from 'firebase/auth';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import Compressor from 'compressorjs';
+import Papa from 'papaparse';
+import { auth, db } from '../firebase';
 
+const router = useRouter();
 
-const router = useRouter()
-const auth = getAuth()
-const db = getFirestore()
+// Default profile picture as Base64 string (1x1 pixel gray placeholder for demo)
+const defaultProfilePictureBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
 
+// State
 const isLoading = ref(false);
-
-const formatSkillName = (skill) => {
-  if (!skill) return ''
-  return skill.split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
-};
-
-const formatInterestName = (interest) => {
-  if (!interest) return ''
-  return interest.split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
-}
-// Progress tracking
-const currentStep = ref(0)
-const steps = ref([
-  'skills',
-  'focusSkill',
-  'level',
-  'interests',
-  'goal',
-  'location',
-  'phone',
-  'about'
-])
-
-// Form data
+const error = ref(null);
+const currentStep = ref(0);
+const steps = ref(['personalSkills', 'interestsGoal', 'additionalInfo']);
 const formData = ref({
-  
   name: auth.currentUser?.displayName || '',
   email: auth.currentUser?.email || '',
   skills: [],
-  focusSkill: '',
-  level: '',
+  focusSkill: null,
+  level: null,
   interests: [],
   goal: '',
   location: '',
   phone: '',
   about: '',
+  profilePictureBase64: defaultProfilePictureBase64, // Initialize with default
   xp: 0,
-  watchedVideos: []
-})
+  watchedVideos: [],
+  lessonsCompleted: [],
+  courseProgress: {},
+});
+const profilePictureFile = ref(null);
+const profilePicturePreview = ref(defaultProfilePictureBase64); // Initialize preview with default
+const skillSearch = ref('');
+const filteredSkills = ref([]);
+const allSkills = ref([]);
+const allInterests = ref([
+  'Content Marketing', 'Digital Marketing', 'Facebook', 'Instagram', 'Marketing', 'Politics',
+  'Social Media', 'Social Media Marketing', 'Tech', 'Technology', 'Twitter', 'Business',
+  'Entrepreneurship', 'Leadership', 'Life', 'Life Lessons', 'Marketing', 'Productivity',
+  'Self Improvement', 'Startup', 'Venture Capital', 'Atheism', 'Christianity', 'Faith',
+  'God', 'Islam', 'Philosophy', 'Politics', 'Religion', 'Spirituality'
+]);
+const levels = ref(['Beginner', 'Intermediate', 'Advanced']);
 
-// Skill selection
-const allSkills = ref([])
-const skillSearch = ref('')
-const filteredSkills = ref([])
+// Formatters
+const formatSkillName = (skill) => {
+  if (!skill) return '';
+  return skill
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
 
-// Interest selection
-const allInterests = ref(['Content Marketing', 'Digital Marketing', 'Facebook', 'Instagram', 'Marketing', 'Politics', 'Social Media', 'Social Media Marketing', 'Tech', 'Technology', 'Twitter', 'Business', 'Entrepreneurship', 'Leadership', 'Life', 'Life Lessons', 'Marketing', 'Productivity', 'Self Improvement', 'Startup', 'Venture Capital', 'Atheism', 'Christianity', 'Faith', 'God', 'Islam', 'Philosophy', 'Politics', 'Religion', 'Spirituality'])
+const formatInterestName = (interest) => {
+  if (!interest) return '';
+  return interest
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
 
 // Validation
 const isCurrentStepValid = computed(() => {
   switch (currentStep.value) {
-    case 0: return formData.value.skills.length >= 1
-    case 1: return !!formData.value.focusSkill
-    case 2: return !!formData.value.level
-    case 3: return formData.value.interests.length >= 1
-    case 4: return !!formData.value.goal
-    case 5: return !!formData.value.location
-    case 6: return /^[0-9]{9}$/.test(formData.value.phone)
-    default: return true
+    case 0:
+      return (
+        formData.value.name.trim() &&
+        formData.value.skills.length >= 1 &&
+        !!formData.value.focusSkill &&
+        !!formData.value.level
+      );
+    case 1:
+      return formData.value.interests.length >= 1 && !!formData.value.goal;
+    case 2:
+      return (
+        !!formData.value.location &&
+        /^[0-9]{9}$/.test(formData.value.phone)
+      );
+    default:
+      return true;
   }
-})
-const canAddSkill = computed(()=> {
+});
+
+const canAddSkill = computed(() => {
   return formData.value.skills.length < 10;
 });
 
-
-
+// Load skills from CSV
 onMounted(async () => {
-  await loadSkillsCSV()
-})
+  await loadSkillsCSV();
+});
 
 const loadSkillsCSV = async () => {
   try {
-    const response = await fetch('/skills.csv')
-    const csv = await response.text()
-    const parsed = Papa.parse(csv, { header: false })
+    const response = await fetch('/skills.csv');
+    const csv = await response.text();
+    const parsed = Papa.parse(csv, { header: false });
     allSkills.value = parsed.data
       .flat()
       .map(s => s.trim().toLowerCase())
       .filter(s => s)
-      .map(s => toTitleCase(s))
-  } catch (error) {
-    console.error('Error loading skills CSV:', error)
+      .map(s => toTitleCase(s));
+  } catch (err) {
+    console.error('Error loading skills CSV:', err);
+    error.value = 'Failed to load skills. Please try again.';
   }
-}
+};
 
 const toTitleCase = (str) => {
-  return str.replace(/wS*/g, txt => 
-    txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
-  )
-}
+  return str.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+};
 
+// Skill Handling
 const searchSkills = () => {
-  const term = skillSearch.value.trim().toLowerCase()
+  const term = skillSearch.value.trim().toLowerCase();
   if (!term) {
-    filteredSkills.value = []
-    return
+    filteredSkills.value = [];
+    return;
   }
-
   filteredSkills.value = allSkills.value
-    .filter(skill => 
-      skill.toLowerCase().includes(term) &&
-      !formData.value.skills.includes(skill)
-    )
-    .slice(0, 10)
-}
+    .filter(skill => skill.toLowerCase().includes(term) && !formData.value.skills.includes(skill))
+    .slice(0, 10);
+};
 
 const selectSkill = (skill) => {
-  if (formData.value.skills.length >= 10) return
-  const formatted = toTitleCase(skill)
+  if (formData.value.skills.length >= 10) return;
+  const formatted = toTitleCase(skill);
   if (!formData.value.skills.includes(formatted)) {
-    formData.value.skills.push(formatted)
+    formData.value.skills.push(formatted);
   }
-  skillSearch.value = ''
-  filteredSkills.value = []
-}
+  skillSearch.value = '';
+  filteredSkills.value = [];
+};
 
 const handleAddSkill = () => {
-  const newSkill = toTitleCase(skillSearch.value.trim())
+  const newSkill = toTitleCase(skillSearch.value.trim());
   if (newSkill && !formData.value.skills.includes(newSkill)) {
     if (formData.value.skills.length < 10) {
-      formData.value.skills.push(newSkill)
+      formData.value.skills.push(newSkill);
     }
   }
-  skillSearch.value = ''
-  filteredSkills.value = []
-}
+  skillSearch.value = '';
+  filteredSkills.value = [];
+};
 
 const removeSkill = (skill) => {
-  formData.value.skills = formData.value.skills.filter(s => s !== skill)
-}
+  formData.value.skills = formData.value.skills.filter(s => s !== skill);
+  if (formData.value.focusSkill === skill) {
+    formData.value.focusSkill = null;
+  }
+};
 
+// Interest Handling
 const toggleInterest = (interest) => {
-  const index = formData.value.interests.indexOf(interest)
+  const index = formData.value.interests.indexOf(interest);
   if (index === -1) {
-    formData.value.interests.push(interest)
+    formData.value.interests.push(interest);
+  } else {
+    formData.value.interests.splice(index, 1);
   }
-  else {
-    formData.value.interests.splice(index,1)
+};
+
+// Profile Picture Handling with Compression
+const handleProfilePictureUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) {
+    formData.value.profilePictureBase64 = null; // Set to null if no file
+    profilePicturePreview.value = defaultProfilePictureBase64;
+    return;
   }
 
+  if (!file.type.startsWith('image/')) {
+    error.value = 'Please upload an image file.';
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    error.value = 'Image size must be less than 5MB.';
+    return;
+  }
 
-}
+  try {
+    const compressedFile = await new Promise((resolve, reject) => {
+      new Compressor(file, {
+        quality: 0.8,
+        maxWidth: 300,
+        maxHeight: 300,
+        mimeType: 'image/jpeg',
+        success(result) {
+          resolve(result);
+        },
+        error(err) {
+          reject(err);
+        },
+      });
+    });
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64String = e.target.result;
+      const base64SizeInBytes = (base64String.length * 3) / 4 - (base64String.endsWith('==') ? 2 : 1);
+      if (base64SizeInBytes > 1048576) {
+        error.value = 'Compressed image is too large. Please upload a smaller image.';
+        return;
+      }
+      formData.value.profilePictureBase64 = base64String;
+      profilePicturePreview.value = base64String;
+    };
+    reader.onerror = () => {
+      error.value = 'Failed to process the image. Please try again.';
+    };
+    reader.readAsDataURL(compressedFile);
+  } catch (err) {
+    console.error('Error compressing image:', err);
+    error.value = 'Failed to compress the image. Please try again.';
+    formData.value.profilePictureBase64 = null; // Reset to null on error
+    profilePicturePreview.value = defaultProfilePictureBase64;
+  }
+};
 
 // Navigation
 const nextStep = async () => {
   if (!isCurrentStepValid.value) {
-    alert('Please complete the current step before proceeding')
-    return
+    error.value = 'Please complete the current step before proceeding.';
+    return;
   }
 
   if (currentStep.value === steps.value.length - 1) {
-    await submitForm()
+    await submitForm();
   } else {
-    currentStep.value++
+    currentStep.value++;
+    error.value = null; // Clear error on step change
   }
-}
+};
 
 const prevStep = () => {
-  if (currentStep.value > 0) currentStep.value--
-}
+  if (currentStep.value > 0) {
+    currentStep.value--;
+    error.value = null; // Clear error on step change
+  }
+};
 
-// Firebase submission
+// Form Submission
 const submitForm = async () => {
   isLoading.value = true;
+  error.value = null;
   try {
-    const user = auth.currentUser
-    if (!user) throw new Error('User not authenticated')
+    const user = auth.currentUser;
+    console.log('Authenticated user:', user);
+    if (!user || !user.uid) {
+      throw new Error('User not authenticated properly.');
+    }
 
-    await setDoc(doc(db, 'users', user.uid), { 
-      ...formData.value,
+    const userDoc = {
+      name: formData.value.name || '',
+      email: formData.value.email || '',
+      skills: formData.value.skills || [],
+      focusSkill: formData.value.focusSkill || null,
+      level: formData.value.level || null,
+      interests: formData.value.interests || [],
+      goal: formData.value.goal || '',
+      location: formData.value.location || '',
+      phone: formData.value.phone || '',
+      about: formData.value.about || '',
+      profilePictureBase64: formData.value.profilePictureBase64 || null,
+      xp: 0,
+      watchedVideos: [],
+      lessonsCompleted: [],
+      courseProgress: {},
+      completion_dates: null,
       createdAt: new Date(),
-      updatedAt: new Date()
-    }, { merge: true })
+      user_id: user.uid,
+      created_by: user.uid,
+      updatedAt: new Date(),
+      onboardingComplete: true,
+    };
 
-    router.push('/dashboard')
-  } catch (error) {
-    console.error('Error saving user data:', error)
-    alert('Error saving profile. Please try again.')
+    console.log('User document to save:', JSON.stringify(userDoc, null, 2));
+    await setDoc(doc(db, 'users', user.uid), userDoc);
+    router.push('/dashboard');
+  } catch (err) {
+    console.error('Error saving user data:', err);
+    error.value = `Save failed: ${err.message}`;
+  } finally {
+    isLoading.value = false;
   }
-  finally {
-    isLoading.value = false; // Hide loader when the form is done
-  }
-  return {formatSkillName, formatInterestName}
-}
+};
 </script>
 
-
 <style scoped>
-.container {
-  display: flex;
-  padding: 40px;
-  align-items: flex-start;
-  min-height: 100vh;
-}
-
-.left-column {
-  position: sticky;
-  top: 40px;
-  flex: 1;
-  padding: 20px;
-  margin-right: 40px;
-}
-
-.right-column {
-  flex: 1;
-  padding: 20px;
-}
-
-.onboarding-container {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-/* Progress Line */
-.progress-line {
-  display: flex;
-  align-items: center;
-  margin-bottom: 30px;
-}
-
-.progress-track {
-  flex: 1;
-  height: 6px;
-  background: #f0f0f0;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #fe572a;
-  transition: width 0.5s ease;
-}
-
-.progress-text {
-  margin-left: 15px;
-  font-weight: bold;
-  color: #fe572a;
-}
-
-/* Skill Input */
-.skill-input-container {
-  position: relative;
-  display: flex;
-  margin-top: 15px;
-}
-
-.skill-input{
-  flex: 1;
-  padding: 12px 20px;
-  border: 2px solid #fe572a;
-  border-radius: 25px;
-  font-size: 16px;
-  outline: none;
-  transition: all 0.3s ease;
-}
-
-.add-skill-button {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #ccc;
-  cursor: pointer;
-  font-size: 18px;
-  padding: 5px 10px;
-  transition: all 0.3s ease;
-}
-
-.add-skill-button:not(:disabled) {
-  color: #fe572a;
-  cursor: pointer;
-}
-
-.add-skill-button:disabled {
-  cursor: not-allowed;
-}
-
-/* Skill Tags */
-.selected-skills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 15px;
-}
-
-.skill-tag {
-  display: inline-block;
-  padding: 8px 16px;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 400;
-  color: #333;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.skill-tag:hover {
-  background: #e9ecef;
-}
-
-.max-skills {
-  color: #fe572a;
-  font-size: 14px;
-  margin-top: 8px;
-}
-
-/* Skill Suggestions */
-.skill-suggestions {
-  position: absolute;
-  width: 100%;
-  max-height: 200px;
-  overflow-y: auto;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  z-index: 10;
-  margin-top: 5px;
-  padding: 0;
-  list-style: none;
-}
-
-.skill-suggestions li {
-  padding: 10px 15px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.skill-suggestions li:hover {
-  background: #f5f5f5;
-}
-
-/* Navigation Buttons */
-.navigation-buttons {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 40px;
-  width: 100%;
-}
-
-.nav-button {
-  padding: 12px 30px;
-  border-radius: 25px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.back-button {
-  background: #f8f9fa;
-  color: #333;
-  border: 1px solid #ddd;
-}
-
-.next-button {
-  background: #fe572a;
-  color: white;
-  border: none;
-}
-
-.next-button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
+/* Tailwind CSS is used inline, so no additional styles are needed here */
 
 /* Transitions */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s, transform 0.3s;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
   transform: translateY(10px);
-}
-
-/* Loader */
-.loader-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.loader {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #fe572a;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .container {
-    flex-direction: column;
-    padding: 20px;
-  }
-  
-  .left-column {
-    position: static;
-    margin-right: 0;
-    margin-bottom: 30px;
-  }
-  .styled-input,
-  .styled-textarea {
-    padding: 10px 14px;
-    font-size: 0.95rem;
-  }
-
-  h4 {
-    font-size: 1rem;
-  }
-}
-
-.interests-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.interest-badge {
-  display: inline-block;
-  padding: 8px 16px;
-  background-color: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  color: #4b5563;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.interest-badge:hover {
-  background-color: #e5e7eb;
-}
-
-.interest-badge.selected {
-  background-color: #fe572a;
-  color: white;
-  border-color: #fe572a;
-}
-
-.input-wrapper {
-  margin-top: 1rem;
-  margin-bottom: 1.5rem;
-  
-}
-
-.input-wrapper .inputs {
-  padding: 10px;
-  border: 2px solid #fe572a;
-  border-radius: 5px;
-  font-size: 16px;
-  outline: none;
-  transition: all 0.3s ease;
-}
-
-h4 {
-  color: #2d3748;
-  font-size: 1.1rem;
-  margin-bottom: 0.8rem;
-  font-weight: 500;
-}
-
-/* Text Input Styles */
-.styled-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background-color: #fff;
-}
-
-.styled-input:focus {
-  outline: none;
-  border-color: #fe572a;
-  box-shadow: 0 0 0 3px rgba(254, 87, 42, 0.2);
-}
-
-/* Phone Input Group */
-.phone-input-group {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.country-code {
-  padding: 0 12px;
-  background: #f7fafc;
-  border: 2px solid #e2e8f0;
-  border-right: none;
-  border-radius: 8px 0 0 8px;
-  height: 46px;
-  display: flex;
-  align-items: center;
-  font-size: 0.95rem;
-  color: #4a5568;
-}
-
-/* Textarea Styles */
-.styled-textarea{
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  resize: vertical;
-  min-height: 120px;
-  font-family: inherit;
-}
-
-.styled-textarea:focus {
-  outline: none;
-  border-color: #fe572a;
-  box-shadow: 0 0 0 3px rgba(254, 87, 42, 0.2);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .interests-container {
-    gap: 6px;
-  }
-  
-  .interest-badge {
-    padding: 6px 12px;
-    font-size: 13px;
-  }
 }
 </style>

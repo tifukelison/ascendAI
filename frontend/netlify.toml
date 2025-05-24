@@ -1,10 +1,16 @@
-# /frontend/netlify.toml
-
 [build]
-  command = "cd frontend && npm install && npm run build"
-  publish = "frontend/dist"
-  functions = "netlify/functions"
-  
+  command = "cd frontend && npm run build"  
+  publish = "frontend/dist"  
+   
+
+[dev]
+  framework = "vite"  
+  port = 3000  
+  autoLaunch = false 
+
+[functions] 
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
 
 [[redirects]]
   from = "/*"

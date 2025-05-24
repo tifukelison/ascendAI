@@ -1,104 +1,237 @@
 <template>
-  <div class="courses-container" :class="{ 'dark-mode': darkMode }">
-    <!-- Search Section -->
-    <div class="search-section">
-      <div class="search-container">
-        <div class="search-input-wrapper">
-          <input
-            class="search-input"
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search Courses"
-            @keyup.enter="searchVideos"
-          />
-          <button class="search-icon" @click="searchVideos">
-            <i class="fas fa-search"></i>
-          </button>
+  <div class="container mx-auto p-4">
+    <h1 class="font-crimson text-3xl text-dark mb-6">Browse Courses</h1>
+
+    <!-- Course List View -->
+    <div v-if="view === 'list'">
+      <!-- Categories -->
+      <div class="flex flex-wrap gap-2 mb-6">
+        <button
+          v-for="category in categories"
+          :key="category"
+          @click="selectCategory(category)"
+          :disabled="loading || !isOnline"
+          class="px-4 py-2 rounded-full font-lato text-sm transition-colors duration-200"
+          :class="{
+            'bg-[#fe572a] text-white': selectedCategories.includes(category),
+            'bg-gray-200 text-dark': !selectedCategories.includes(category),
+            'opacity-50 cursor-not-allowed': loading || !isOnline,
+          }"
+        >
+          {{ category }}
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="loading" class="flex justify-center items-center h-64">
+        <div class="border-t-4 border-primary rounded-full animate-spin w-8 h-8"></div>
+      </div>
+      <!-- Error State -->
+      <div v-else-if="error" class="bg-red-100 text-red-700 font-lato p-4 rounded-lg mb-4">
+        <p class="mb-2">{{ error.message }}</p>
+        <button
+          v-if="error.retryAction"
+          @click="error.retryAction"
+          :disabled="!isOnline"
+          class="underline text-red-900 hover:text-red-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Retry
+        </button>
+      </div>
+      <!-- No Courses -->
+      <div v-else-if="courses.length === 0" class="font-lato text-dark text-center">
+        No courses available. Please check back later!
+      </div>
+      <!-- Course List -->
+      <div v-else>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div
+            v-for="course in paginatedCourses"
+            :key="course.id"
+            @click="selectCourse(course.id)"
+            class="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+          >
+            <h2 class="font-crimson text-xl font-bold mb-2" style="color: #fe572a;">
+              {{ course.title }}
+            </h2>
+            <p class="font-lato text-sm text-dark mb-2">{{ course.description }}</p>
+            <p class="font-lato text-sm text-dark mb-2">{{ course.xpTotal }} XP</p>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+              <div
+                class="bg-primary h-2.5 rounded-full transition-width duration-300"
+                :style="{ width: getProgressPercentage(course.id) + '%' }"
+              ></div>
+            </div>
+            <button
+              class="w-full bg-[#fe572a] text-white font-lato py-2 rounded hover:bg-opacity-90 transition-colors duration-200"
+              :disabled="!isOnline"
+              :class="{ 'opacity-50 cursor-not-allowed': !isOnline }"
+            >
+              {{ getProgress(course.id) > 0 ? 'Continue' : 'Start' }}
+            </button>
+          </div>
         </div>
-        <div v-if="isLoading" class="search-loader">
-          <div class="loader"></div>
+
+        <!-- Pagination Controls -->
+        <div class="mt-10 flex justify-center items-center" v-if="courses.length > 0">
+          <button
+            @click="prevPage"
+            :disabled="currentPage === 1 || loading || !isOnline"
+            class="font-semibold py-2 px-4 rounded-l transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            :style="{ backgroundColor: currentPage === 1 ? '#E2E8F0' : '#fe572a', color: currentPage === 1 ? '#22252a' : 'white' }"
+            :class="{ 'hover:opacity-80': currentPage !== 1 }"
+          >
+            <span v-if="loading && isChangingToPrev" class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
+            <span v-else>Prev</span>
+          </button>
+          <span class="px-5 py-2 text-gray-700 bg-gray-100" style="color: #22252a;">
+            Page {{ currentPage }} of {{ totalPages }}
+          </span>
+          <button
+            @click="nextPage"
+            :disabled="currentPage === totalPages || loading || !isOnline"
+            class="font-semibold py-2 px-4 rounded-r transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            :style="{ backgroundColor: currentPage === totalPages ? '#E2E8F0' : '#fe572a', color: currentPage === totalPages ? '#22252a' : 'white' }"
+            :class="{ 'hover:opacity-80': currentPage !== totalPages }"
+          >
+            <span v-if="loading && !isChangingToPrev" class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
+            <span v-else>Next</span>
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Video Player Section -->
-    <div v-if="currentVideo" class="video-section">
-      <div class="video-player-container">
-        <div class="video-player-wrapper">
-          <iframe
-            :src="playerUrl"
-            frameborder="0"
-            allowfullscreen
-            @load="initPlayer"
-            @error="handlePlayerError"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            class="youtube-player"
-          ></iframe>
-        </div>
+    <!-- Course Detail View (Lessons List) -->
+    <div v-else-if="view === 'detail'">
+      <button @click="backToList" class="mb-4 font-lato text-primary" :disabled="!isOnline" :class="{ 'opacity-50 cursor-not-allowed': !isOnline }">
+        ← Back to Courses
+      </button>
+      <div v-if="loadingDetail" class="flex justify-center items-center h-64">
+        <div class="border-t-4 border-primary rounded-full animate-spin w-8 h-8"></div>
       </div>
-      
-      <!-- Video Metadata -->
-      <div class="video-meta">
-        <div class="video-header">
-          <h2>{{ currentVideo.title }}</h2>
-          <button 
-            class="bookmark-button"
-            @click="toggleBookmark(currentVideo)"
-            :class="{ 'bookmarked': isBookmarked(currentVideo.id) }"
+      <div v-else-if="errorDetail" class="bg-red-100 text-red-700 font-lato p-4 rounded-lg mb-4">
+        <p class="p-2">{{ errorDetail.message }}</p>
+        <button
+          v-if="errorDetail.retryAction"
+          @click="errorDetail.retryAction"
+          :disabled="!isOnline"
+          class="underline text-red-900 hover:text-red-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Retry
+        </button>
+      </div>
+      <div v-else>
+        <h1 class="font-crimson text-3xl text-dark mb-4">{{ selectedCourse?.title }}</h1>
+        <div v-if="computedStaleProgress" class="bg-yellow-100 p-4 mb-4 rounded font-lato flex justify-between items-center">
+          <span>Content updated—your progress is preserved, but we recommend revisiting.</span>
+          <button @click="dismissStaleProgress" class="text-primary underline" :disabled="!isOnline" :class="{ 'opacity-50 cursor-not-allowed': !isOnline }">
+            Dismiss
+          </button>
+        </div>
+
+        <!-- Lessons List -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div
+            v-for="(lesson, index) in selectedCourse?.lessons"
+            :key="lesson.id"
+            @click="selectLesson(index)"
+            class="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer flex justify-between items-center"
+            :class="{ 'opacity-50 cursor-not-allowed': !isOnline }"
           >
-            <i class="fas" :class="isBookmarked(currentVideo.id) ? 'fa-bookmark' : 'fa-bookmark-o'"></i>
-          </button>
-        </div>
-        
-        <div class="meta-grid">
-          <div class="meta-item">
-            <span class="label">Duration:</span>
-            <span>{{ formattedDuration }}</span>
+            <div>
+              <h3 class="font-crimson text-lg text-dark">{{ lesson.title }}</h3>
+              <p class="font-lato text-sm text-dark">{{ lesson.description || 'No description available' }}</p>
+              <p class="font-lato text-sm text-dark">{{ lesson.xpReward }} XP • {{ getReadingTime(lesson.content) }} min read</p>
+            </div>
+            <div v-if="progress?.lessonsCompleted?.includes(lesson.id)" class="text-green-500">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
           </div>
-          <div class="meta-item">
-            <span class="label">Skill Level:</span>
-            <span>{{ currentVideo.skillLevel }}</span>
-          </div>
-          <div class="meta-item">
-            <span class="label">Creator:</span>
-            <span>{{ currentVideo.channelTitle }}</span>
-          </div>
-        </div>
-        
-        <div class="video-actions">
-          <button class="action-button" @click="markAsWatched">
-            <i class="fas fa-check-circle"></i> Mark as Watched
-          </button>
         </div>
       </div>
     </div>
 
-    <!-- Video Grid -->
-    <div class="video-grid">
-      <div 
-        v-for="video in videos" 
-        :key="video.id" 
-        class="video-card"
-        @click="loadVideo(video)"
-        :class="{ 'dark-card': darkMode }"
-      >
-        <div class="thumbnail-wrapper">
-          <img 
-            :src="video.thumbnail" 
-            :alt="video.title"
-            @error="handleThumbnailError"
-          >
-          <span class="duration-badge">{{ formatDuration(video.duration) }}</span>
-          <div v-if="getWatchProgress(video.id)" class="progress-bar">
-            <div class="progress-fill" :style="{ width: `${getWatchProgress(video.id)}%` }"></div>
+    <!-- Lesson Detail View -->
+    <div v-else-if="view === 'lesson'">
+      <button @click="backToCourse" class="mb-4 font-lato text-primary" :disabled="!isOnline" :class="{ 'opacity-50 cursor-not-allowed': !isOnline }">
+        ← Back to Lessons
+      </button>
+      <div v-if="loadingDetail" class="flex justify-center items-center h-64">
+        <div class="border-t-4 border-primary rounded-full animate-spin w-8 h-8"></div>
+      </div>
+      <div v-else-if="errorDetail" class="bg-red-100 text-red-700 font-lato p-4 rounded-lg mb-4">
+        <p class="mb-2">{{ errorDetail.message }}</p>
+        <button
+          v-if="errorDetail.retryAction"
+          @click="errorDetail.retryAction"
+          :disabled="!isOnline"
+          class="underline text-red-900 hover:text-red-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Retry
+        </button>
+      </div>
+      <div v-else>
+        <h2 class="font-crimson text-2xl text-dark mb-4">{{ selectedLesson?.title }}</h2>
+        <div v-if="selectedLesson?.type === 'text'" class="prose font-lato text-dark mb-6">
+          <VueMarkdown :source="selectedLesson.content" />
+        </div>
+        <div v-if="exercise" class="mt-6">
+          <h3 class="font-crimson text-xl text-dark mb-2">Exercise</h3>
+          <p class="font-lato text-dark mb-2">{{ exercise.prompt }}</p>
+          <p class="font-lato text-dark mb-4 italic">By submitting this exercise, you complete the lesson and earn {{ exercise.xpReward }} XP.</p>
+          <div v-if="isLessonCompleted" class="bg-green-100 text-green-700 font-lato p-4 rounded-lg mb-4">
+            This lesson is already completed. You have earned {{ exercise.xpReward }} XP.
+          </div>
+          <textarea
+            v-else
+            v-model="response"
+            :placeholder="exercise ? 'Your response' : 'No exercise available'"
+            class="w-full p-2 border rounded font-lato text-dark resize-y mb-4"
+            :disabled="!exercise || !isOnline"
+            @input="handleInput"
+            @beforeunload="checkUnsaved"
+          ></textarea>
+          <div v-if="!isLessonCompleted" class="flex gap-2">
+            <button
+              @click="debouncedSubmitExercise"
+              :disabled="response.length < 10 || submitting || !exercise || !isOnline"
+              class="bg-orange-100 text-orange-800 font-lato py-2 px-4 rounded flex items-center transition-colors duration-200"
+              :class="{ 'opacity-50 cursor-not-allowed': response.length < 10 || submitting || !exercise || !isOnline }"
+            >
+              <span v-if="submitting" class="mr-2">
+                <div class="border-t-2 border-white rounded-full animate-spin w-4 h-4"></div>
+              </span>
+              Submit
+            </button>
+            <button
+              @click="debouncedClearExercise"
+              :disabled="submitting || !isOnline"
+              class="bg-primary font-lato py-2 px-4 rounded flex items-center transition-colors duration-200"
+              :class="{ 'opacity-50 cursor-not-allowed': submitting || !isOnline }"
+            >
+              Clear
+            </button>
           </div>
         </div>
-        <div class="video-info">
-          <h4>{{ video.title }}</h4>
-          <div class="skill-level">{{ video.skillLevel }}</div>
-          <p>{{ video.channelTitle }}</p>
-          <div v-if="isBookmarked(video.id)" class="bookmark-indicator">
-            <i class="fas fa-bookmark"></i>
+        <div
+          v-if="showModal"
+          class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center"
+        >
+          <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <h3 class="font-crimson text-xl text-dark mb-4">Submission Result</h3>
+            <p class="font-lato text-dark">You earned +{{ submissionResult.xpAwarded }} XP</p>
+            <p class="font-lato text-dark">Gemini Score: {{ submissionResult.score }}/10</p>
+            <ul class="font-lato text-dark list-disc pl-5 my-2">
+              <li v-for="(tip, index) in submissionResult.tips" :key="index">{{ tip }}</li>
+            </ul>
+            <button
+              @click="showModal = false"
+              class="bg-primary text-white font-lato py-2 px-4 rounded hover:bg-opacity-90 transition-colors duration-200"
+            >
+              Close
+            </button>
           </div>
         </div>
       </div>
@@ -107,595 +240,549 @@
 </template>
 
 <script>
-import axios from 'axios';
-import { mapState } from 'vuex';
-import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion, increment } from 'firebase/firestore';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { collection, query, orderBy, getDocs, doc, getDoc, setDoc, arrayUnion, increment, runTransaction } from 'firebase/firestore';
+import { db, auth } from '../firebase'; // Adjust the import path to your Firebase config
+import VueMarkdown from 'vue-markdown-render'; // For rendering Markdown content
 
 export default {
   name: 'Courses',
-  data() {
-    return {
-      searchQuery: '',
-      videos: [],
-      currentVideo: null,
-      player: null,
-      playerOptions: {
-        autoplay: 1,
-        modestbranding: 1,
-        rel: 0,
-        controls: 1,
-        disablekb: 1,
-        fs: 0,
-        iv_load_policy: 3,
-        color: 'white',
-        playsinline: 1
-      },
-      isLoading: false,
-      userData: null,
-      watchHistory: {},
-      bookmarks: []
-    };
+  components: {
+    VueMarkdown,
   },
-  computed: {
-    playerUrl() {
-      return `https://www.youtube-nocookie.com/embed/${this.currentVideo?.id}?${new URLSearchParams({
-        ...this.playerOptions,
-        origin: window.location.origin
-      }).toString()}`;
-    },
-    formattedDuration() {
-      return this.formatDuration(this.currentVideo?.duration);
-    },
-    ...mapState(['darkMode']),
-    userFocusSkill() {
-      return this.userData?.focusSkill || 'JavaScript';
-    }
-  },
-  async mounted() {
-    await this.loadUserData();
-    this.searchVideos();
-    window.addEventListener('beforeunload', this.saveWatchProgress);
-  },
-  beforeUnmount() {
-    window.removeEventListener('beforeunload', this.saveWatchProgress);
-    this.saveWatchProgress();
-  },
-  methods: {
-    async loadUserData() {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) return;
+  setup() {
+    // State variables
+    const view = ref('list');
+    const categories = ref(['All', 'Branding', 'Design', 'Marketing', 'Development', 'Business', 'Lifestyle', 'Copy & Content']);
+    const selectedCategories = ref(['All']);
+    const courses = ref([]);
+    const paginatedCourses = ref([]);
+    const currentPage = ref(1);
+    const coursesPerPage = 9;
+    const totalPages = ref(1);
+    const loading = ref(true);
+    const isChangingToPrev = ref(false);
+    const error = ref(null);
+    const selectedCourse = ref(null);
+    const progress = ref(null);
+    const loadingDetail = ref(false);
+    const errorDetail = ref(null);
+    const selectedLessonIndex = ref(0);
+    const selectedLesson = ref(null);
+    const exercise = ref(null);
+    const response = ref('');
+    const submitting = ref(false);
+    const showModal = ref(false);
+    const submissionResult = ref(null);
+    const staleProgress = ref(true);
+    const dismissedStaleProgress = ref(false);
+    const isOnline = ref(navigator.onLine);
 
-      const db = getFirestore();
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      
-      if (userDoc.exists()) {
-        this.userData = userDoc.data();
-        this.watchHistory = this.userData.watchHistory || {};
-        this.bookmarks = this.userData.bookmarks || [];
-      }
-    },
-    async searchVideos() {
-      try {
-        this.isLoading = true;
-        const response = await axios.get('/api/youtube/search', {
-          params: {
-            q: this.searchQuery || this.userFocusSkill,
-            skillLevel: '',
-            order: 'viewCount' // Get most popular videos
-          }
-        });
-        this.videos = response.data.items.map(video => ({
-          ...video,
-          skillLevel: this.detectSkillLevel(video.title)
-        }));
-      } catch (error) {
-        console.error('Error fetching videos:', error);
-      } finally {
-        this.isLoading = false;
-      }
-    },
-    handleThumbnailError(e) {
-      e.target.src = 'https://via.placeholder.com/400x225?text=Video+Thumbnail';
-    },
-    handlePlayerError() {
-      console.error('Error loading video player');
-      this.currentVideo = null;
-    },
-    formatDuration(duration) {
-      const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
-      const hours = parseInt(match[1]) || 0;
-      const minutes = parseInt(match[2]) || 0;
-      return [hours && `${hours}h`, minutes && `${minutes}m`].filter(Boolean).join(' ');
-    },
-    async loadVideo(video) {
-      if (this.player) {
-        this.player.destroy();
-        this.player = null;
-      }
-      this.currentVideo = video;
-
-      // Load YouTube API if not already loaded
-      if (!window.YT) {
-        const tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        const firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-      }
-
-      // Update watch history
-      if (!this.watchHistory[video.id]) {
-        this.watchHistory[video.id] = { lastWatched: new Date(), progress: 0 };
-        await this.saveWatchHistory();
-      }
-    },
-    initPlayer() {
-      if (window.YT && window.YT.Player) {
-        try {
-          this.player = new YT.Player(document.querySelector('.youtube-player'), {
-            events: {
-              'onStateChange': this.onPlayerStateChange,
-              'onReady': this.onPlayerReady
-            }
-          });
-        } catch (error) {
-          console.error("Player initialization error", error);
+    // Handle online/offline status
+    const updateOnlineStatus = () => {
+      isOnline.value = navigator.onLine;
+      if (!isOnline.value) {
+        if (view.value === 'list') {
+          error.value = { message: 'Error: You are offline. Please check your internet connection.' };
+        } else {
+          errorDetail.value = { message: 'Error: You are offline. Please check your internet connection.' };
         }
       }
-    },
-    onPlayerReady(event) {
-      // Restore playback position if available
-      if (this.currentVideo?.id && this.watchHistory[this.currentVideo.id]?.progress > 0) {
-        const duration = event.target.getDuration();
-        const seekTo = duration * (this.watchHistory[this.currentVideo.id].progress / 100);
-        event.target.seekTo(seekTo, true);
+    };
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    // Fetch all courses from Firestore with pagination support
+    const fetchCourses = async () => {
+      if (!isOnline.value) {
+        error.value = { message: 'Error: You are offline. Please check your internet connection.' };
+        loading.value = false;
+        return;
       }
-    },
-    onPlayerStateChange(event) {
-      if (event.data === YT.PlayerState.ENDED) {
-        this.awardXP();
-      } else if (event.data === YT.PlayerState.PLAYING) {
-        this.trackPlayback();
+      loading.value = true;
+      error.value = null;
+      try {
+        const q = query(collection(db, 'courses'), orderBy('title'));
+        const querySnapshot = await getDocs(q);
+        courses.value = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        updatePagination();
+      } catch (err) {
+        let message = 'Error: Unable to load courses. ';
+        let retryAction = fetchCourses;
+        if (err.code === 'permission-denied') {
+          message += 'You do not have permission to access courses. Please sign in or contact support.';
+          retryAction = null;
+        } else if (err.code === 'unavailable') {
+          message += 'Network issue detected. Please check your connection and try again.';
+        } else if (err.code === 'resource-exhausted') {
+          message += 'Quota exceeded. Please try again later.';
+          retryAction = null;
+        } else {
+          message += 'An unexpected error occurred. Please try again.';
+        }
+        error.value = { message, retryAction };
+      } finally {
+        loading.value = false;
       }
-    },
-    trackPlayback() {
-      // Periodically save playback progress
-      this.playbackInterval = setInterval(() => {
-        if (this.player && this.currentVideo) {
-          const currentTime = this.player.getCurrentTime();
-          const duration = this.player.getDuration();
-          const progress = (currentTime / duration) * 100;
-          this.watchHistory[this.currentVideo.id] = {
-            lastWatched: new Date(),
-            progress: Math.min(progress, 100)
+    };
+
+    // Update paginated courses
+    const updatePagination = () => {
+      const filtered = selectedCategories.value.includes('All')
+        ? courses.value
+        : courses.value.filter((course) => selectedCategories.value.includes(course.category));
+      totalPages.value = Math.ceil(filtered.length / coursesPerPage);
+      const start = (currentPage.value - 1) * coursesPerPage;
+      const end = start + coursesPerPage;
+      paginatedCourses.value = filtered.slice(start, end);
+    };
+
+    // Pagination controls
+    const nextPage = () => {
+      if (currentPage.value < totalPages.value) {
+        isChangingToPrev.value = false;
+        currentPage.value++;
+        updatePagination();
+      }
+    };
+
+    const prevPage = () => {
+      if (currentPage.value > 1) {
+        isChangingToPrev.value = true;
+        currentPage.value--;
+        updatePagination();
+      }
+    };
+
+    // Filter courses by selected categories
+    const filteredCourses = computed(() => {
+      if (selectedCategories.value.includes('All')) return courses.value;
+      return courses.value.filter((course) => selectedCategories.value.includes(course.category));
+    });
+
+    // Category selection
+    const selectCategory = (category) => {
+      if (!isOnline.value) return;
+      if (category === 'All') {
+        selectedCategories.value = ['All'];
+      } else {
+        selectedCategories.value = selectedCategories.value.filter((c) => c !== 'All');
+        if (selectedCategories.value.includes(category)) {
+          selectedCategories.value = selectedCategories.value.filter((c) => c !== category);
+          if (selectedCategories.value.length === 0) selectedCategories.value = ['All'];
+        } else {
+          selectedCategories.value.push(category);
+        }
+      }
+      currentPage.value = 1;
+      updatePagination();
+    };
+
+    // Calculate reading time based on word count (200 words per minute)
+    const getReadingTime = (content) => {
+      if (!content) return 1;
+      const words = content.split(/\s+/).length;
+      const minutes = Math.ceil(words / 200);
+      return minutes;
+    };
+
+    // Fetch course details and progress when a course is selected
+    const selectCourse = async (courseId) => {
+      if (!isOnline.value) {
+        errorDetail.value = { message: 'Error: You are offline. Please check your internet connection.' };
+        return;
+      }
+      view.value = 'detail';
+      loadingDetail.value = true;
+      errorDetail.value = null;
+      try {
+        const courseRef = doc(db, 'courses', courseId);
+        const courseDoc = await getDoc(courseRef);
+        if (!courseDoc.exists()) throw new Error('Course not found');
+
+        const courseData = { id: courseDoc.id, ...courseDoc.data() };
+
+        // Validate and fetch lessons
+        if (!Array.isArray(courseData.lessons)) throw new Error('Invalid lessons data in course.');
+        const lessonDocs = await Promise.all(
+          courseData.lessons.map((lessonId) =>
+            getDoc(doc(db, 'lessons', lessonId)).then((doc) => {
+              if (!doc.exists()) throw new Error(`Lesson ${lessonId} not found`);
+              return { id: doc.id, ...doc.data() };
+            })
+          )
+        );
+        courseData.lessons = lessonDocs;
+
+        // Calculate course XP as the sum of lesson XPs
+        courseData.xpTotal = courseData.lessons.reduce((total, lesson) => total + (lesson.xpReward || 0), 0);
+
+        // Fetch user progress
+        if (auth.currentUser) {
+          const progressRef = doc(db, 'users', auth.currentUser.uid, 'courseProgress', courseId);
+          const progressDoc = await getDoc(progressRef);
+          progress.value = progressDoc.exists()
+            ? progressDoc.data()
+            : { lessonsCompleted: [], xpEarned: 0, version: 0 };
+        } else {
+          progress.value = { lessonsCompleted: [], xpEarned: 0, version: 0 };
+        }
+
+        selectedCourse.value = courseData;
+        staleProgress.value = progress.value && selectedCourse.value ? progress.value.version < selectedCourse.value.version : false;
+      } catch (err) {
+        let message = 'Error: Unable to load course details. ';
+        let retryAction = () => selectCourse(courseId);
+        if (err.message.includes('Lesson') && err.message.includes('not found')) {
+          message += 'One or more lessons are missing. Please contact support.';
+          retryAction = null;
+        } else if (err.message === 'Course not found') {
+          message += 'This course does not exist. Please select another course.';
+          retryAction = null;
+        } else if (err.message === 'Invalid lessons data in course.') {
+          message += 'Course data is corrupted. Please contact support.';
+          retryAction = null;
+        } else if (err.code === 'permission-denied') {
+          message += 'You do not have permission to access this course. Please sign in or contact support.';
+          retryAction = null;
+        } else if (err.code === 'unavailable') {
+          message += 'Network issue detected. Please check your connection and try again.';
+        } else if (err.code === 'resource-exhausted') {
+          message += 'Quota exceeded. Please try again later.';
+          retryAction = null;
+        } else {
+          message += 'An unexpected error occurred. Please try again.';
+        }
+        errorDetail.value = { message, retryAction };
+      } finally {
+        loadingDetail.value = false;
+      }
+    };
+
+    // Select a lesson
+    const selectLesson = async (index) => {
+      if (!isOnline.value) {
+        errorDetail.value = { message: 'Error: You are offline. Please check your internet connection.' };
+        return;
+      }
+      selectedLessonIndex.value = index;
+      selectedLesson.value = selectedCourse.value?.lessons[index];
+      view.value = 'lesson';
+      loadingDetail.value = true;
+      errorDetail.value = null;
+      try {
+        // Fetch associated exercise if it exists
+        if (selectedLesson.value?.exerciseId) {
+          const exerciseRef = doc(db, 'exercises', selectedLesson.value.exerciseId);
+          const exerciseDoc = await getDoc(exerciseRef);
+          if (!exerciseDoc.exists()) throw new Error(`Exercise ${selectedLesson.value.exerciseId} not found`);
+          exercise.value = exerciseDoc.data();
+        } else {
+          exercise.value = null;
+        }
+      } catch (err) {
+        let message = 'Error: Unable to load lesson details. ';
+        let retryAction = () => selectLesson(index);
+        if (err.message.includes('Exercise') && err.message.includes('not found')) {
+          message += 'The associated exercise is missing. You can still complete the lesson without it.';
+          retryAction = null;
+          exercise.value = null; // Allow lesson to load without exercise
+        } else if (err.code === 'permission-denied') {
+          message += 'You do not have permission to access this lesson. Please sign in or contact support.';
+          retryAction = null;
+        } else if (err.code === 'unavailable') {
+          message += 'Network issue detected. Please check your connection and try again.';
+        } else if (err.code === 'resource-exhausted') {
+          message += 'Quota exceeded. Please try again later.';
+          retryAction = null;
+        } else {
+          message += 'An unexpected error occurred. Please try again.';
+        }
+        errorDetail.value = { message, retryAction };
+      } finally {
+        loadingDetail.value = false;
+      }
+    };
+
+    // Check if the current lesson is completed
+    const isLessonCompleted = computed(() => {
+      return progress.value?.lessonsCompleted?.includes(selectedLesson.value?.id);
+    });
+
+    // Update user XP and course progress atomically using a transaction
+    const updateProgressAndXP = async (xpToAdd, lessonId) => {
+      if (!auth.currentUser) return;
+      try {
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        const progressRef = doc(db, 'users', auth.currentUser.uid, 'courseProgress', selectedCourse.value.id);
+
+        await runTransaction(db, async (transaction) => {
+          const progressDoc = await transaction.get(progressRef);
+          const userDoc = await transaction.get(userRef);
+
+          // Check if lesson is already completed
+          const currentProgress = progressDoc.exists() ? progressDoc.data() : { lessonsCompleted: [], xpEarned: 0, version: 0 };
+          if (currentProgress.lessonsCompleted.includes(lessonId)) {
+            throw new Error('Lesson already completed');
+          }
+
+          // Update course progress
+          transaction.set(progressRef, {
+            lessonsCompleted: arrayUnion(lessonId),
+            xpEarned: increment(xpToAdd),
+            version: currentProgress.version || 1,
+          }, { merge: true });
+
+          // Update user XP
+          const currentXP = userDoc.exists() && userDoc.data().xp ? userDoc.data().xp : 0;
+          transaction.set(userRef, { xp: currentXP + xpToAdd }, { merge: true });
+
+          // Update local state
+          progress.value.lessonsCompleted = [...(progress.value?.lessonsCompleted || []), lessonId];
+          progress.value.xpEarned = (progress.value?.xpEarned || 0) + xpToAdd;
+        });
+      } catch (err) {
+        console.error('Error updating progress and XP:', err);
+        if (err.message === 'Lesson already completed') {
+          errorDetail.value = {
+            message: 'Error: This lesson has already been completed. You cannot earn XP again.',
+            retryAction: null,
+          };
+        } else {
+          errorDetail.value = {
+            message: 'Error: Failed to update your progress and XP. Please try again.',
+            retryAction: () => updateProgressAndXP(xpToAdd, lessonId),
           };
         }
-      }, 5000);
-    },
-    async saveWatchHistory() {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user || !this.currentVideo) return;
-
-      const db = getFirestore();
-      await updateDoc(doc(db, 'users', user.uid), {
-        watchHistory: this.watchHistory,
-        lastWatched: new Date()
-      });
-    },
-    async saveWatchProgress() {
-      if (this.playbackInterval) {
-        clearInterval(this.playbackInterval);
       }
-      await this.saveWatchHistory();
-    },
-    async awardXP() {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user || !this.currentVideo) return;
+    };
 
-      // Check if XP was already awarded for this video
-      if (this.watchHistory[this.currentVideo.id]?.completed) return;
+    // Return to the course list
+    const backToList = () => {
+      if (!isOnline.value) return;
+      view.value = 'list';
+      selectedCourse.value = null;
+      progress.value = null;
+      selectedLessonIndex.value = 0;
+      selectedLesson.value = null;
+      exercise.value = null;
+      response.value = ''; // Clear response to prevent resubmission
+      errorDetail.value = null;
+    };
 
-      const db = getFirestore();
-      await updateDoc(doc(db, 'users', user.uid), {
-        xp: increment(20),
-        [`watchHistory.${this.currentVideo.id}.completed`]: true,
-        [`watchHistory.${this.currentVideo.id}.completedAt`]: new Date()
-      });
+    // Return to the lessons list
+    const backToCourse = () => {
+      if (!isOnline.value) return;
+      view.value = 'detail';
+      selectedLesson.value = null;
+      exercise.value = null;
+      response.value = ''; // Clear response to prevent resubmission
+      errorDetail.value = null;
+    };
 
-      // Update local state
-      this.watchHistory[this.currentVideo.id].completed = true;
-      if (this.userData) {
-        this.userData.xp = (this.userData.xp || 0) + 20;
-      }
+    // Dismiss stale progress message
+    const dismissStaleProgress = () => {
+      if (!isOnline.value) return;
+      dismissedStaleProgress.value = true;
+      staleProgress.value = false;
+    };
 
-      alert('Congratulations! You earned 20 XP for completing this video!');
-    },
-    async markAsWatched() {
-      if (this.currentVideo) {
-        this.watchHistory[this.currentVideo.id] = {
-          lastWatched: new Date(),
-          progress: 100,
-          completed: true
-        };
-        await this.saveWatchHistory();
-        await this.awardXP();
-      }
-    },
-    getWatchProgress(videoId) {
-      return this.watchHistory[videoId]?.progress || 0;
-    },
-    detectSkillLevel(title) {
-      const lcTitle = title.toLowerCase();
-      if (lcTitle.includes('beginner')) return 'Beginner';
-      if (lcTitle.includes('intermediate')) return 'Intermediate';
-      if (lcTitle.includes('advanced')) return 'Advanced';
-      return 'All Levels';
-    },
-    isBookmarked(videoId) {
-      return this.bookmarks.some(b => b.id === videoId);
-    },
-    async toggleBookmark(video) {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) return;
+    // Computed properties
+    const computedStaleProgress = computed(() => staleProgress.value && !dismissedStaleProgress.value);
 
-      const db = getFirestore();
-      const videoRef = {
-        id: video.id,
-        title: video.title,
-        thumbnail: video.thumbnail,
-        channelTitle: video.channelTitle,
-        savedAt: new Date()
+    const getProgress = (courseId) => {
+      if (!progress.value || selectedCourse?.value?.id !== courseId) return 0;
+      const xpEarned = progress.value.xpEarned || 0;
+      const xpTotal = selectedCourse.value?.xpTotal || 1;
+      return xpEarned / xpTotal;
+    };
+
+    const getProgressPercentage = (courseId) => Math.min(getProgress(courseId) * 100, 100);
+
+    // Debounce utility to prevent rapid submissions
+    const debounce = (func, wait) => {
+      let timeout;
+      return (...args) => {
+        if (timeout) clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
       };
+    };
 
-      if (this.isBookmarked(video.id)) {
-        this.bookmarks = this.bookmarks.filter(b => b.id !== video.id);
-        await updateDoc(doc(db, 'users', user.uid), {
-          bookmarks: this.bookmarks
-        });
-      } else {
-        this.bookmarks.push(videoRef);
-        await updateDoc(doc(db, 'users', user.uid), {
-          bookmarks: arrayUnion(videoRef)
-        });
+    // Handle exercise submission
+    const submitExercise = async () => {
+      if (!exercise.value) return;
+      if (!isOnline.value) {
+        errorDetail.value = { message: 'Error: You are offline. Please check your internet connection.' };
+        return;
       }
-    }
-  }
+      if (!auth.currentUser) {
+        errorDetail.value = { message: 'Error: You are not signed in. Please sign in to submit exercises.' };
+        return;
+      }
+      if (isLessonCompleted.value) {
+        errorDetail.value = { message: 'Error: This lesson has already been completed. You cannot submit again.' };
+        return;
+      }
+
+      submitting.value = true;
+      try {
+        // Mock submission logic (replace with actual backend call)
+        submissionResult.value = { xpAwarded: exercise.value.xpReward, score: 8, tips: ['Tip 1', 'Tip 2'] };
+        showModal.value = true;
+
+        // Update user XP and course progress atomically
+        const xpToAdd = exercise.value.xpReward;
+        await updateProgressAndXP(xpToAdd, selectedLesson.value.id);
+
+        response.value = '';
+      } catch (err) {
+        let message = 'Error: Failed to submit exercise. ';
+        let retryAction = submitExercise;
+        if (err.code === 'permission-denied') {
+          message += 'You do not have permission to submit exercises. Please sign in or contact support.';
+          retryAction = null;
+        } else if (err.code === 'unavailable') {
+          message += 'Network issue detected. Please check your connection and try again.';
+        } else if (err.code === 'resource-exhausted') {
+          message += 'Quota exceeded. Please try again later.';
+          retryAction = null;
+        } else {
+          message += 'An unexpected error occurred. Please try again.';
+        }
+        errorDetail.value = { message, retryAction };
+      } finally {
+        submitting.value = false;
+      }
+    };
+
+    // Debounced submit exercise to prevent rapid submissions
+    const debouncedSubmitExercise = debounce(submitExercise, 1000);
+
+    // Clear exercise (mark lesson as completed without submission)
+    const clearExercise = async () => {
+      if (progress.value?.lessonsCompleted?.includes(selectedLesson.value?.id)) return;
+      if (!isOnline.value) {
+        errorDetail.value = { message: 'Error: You are offline. Please check your internet connection.' };
+        return;
+      }
+      if (!auth.currentUser) {
+        errorDetail.value = { message: 'Error: You are not signed in. Please sign in to complete lessons.' };
+        return;
+      }
+      if (isLessonCompleted.value) {
+        errorDetail.value = { message: 'Error: This lesson has already been completed. You cannot clear again.' };
+        return;
+      }
+
+      submitting.value = true;
+      try {
+        // If there's an exercise, use its XP; otherwise, use the lesson's XP
+        const xpToAdd = exercise.value ? exercise.value.xpReward : selectedLesson.value.xpReward;
+        await updateProgressAndXP(xpToAdd, selectedLesson.value.id);
+      } catch (err) {
+        let message = 'Error: Failed to clear exercise. ';
+        let retryAction = clearExercise;
+        if (err.code === 'permission-denied') {
+          message += 'You do not have permission to complete lessons. Please sign in or contact support.';
+          retryAction = null;
+        } else if (err.code === 'unavailable') {
+          message += 'Network issue detected. Please check your connection and try again.';
+        } else if (err.code === 'resource-exhausted') {
+          message += 'Quota exceeded. Please try again later.';
+          retryAction = null;
+        } else {
+          message += 'An unexpected error occurred. Please try again.';
+        }
+        errorDetail.value = { message, retryAction };
+      } finally {
+        submitting.value = false;
+      }
+    };
+
+    // Debounced clear exercise to prevent rapid submissions
+    const debouncedClearExercise = debounce(clearExercise, 1000);
+
+    // Handle unsaved changes warning
+    const checkUnsaved = (event) => {
+      if (response.value && !isLessonCompleted.value) {
+        event.preventDefault();
+        event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+      }
+    };
+
+    const handleInput = () => {
+      window.addEventListener('beforeunload', checkUnsaved);
+    };
+
+    onBeforeUnmount(() => {
+      window.removeEventListener('beforeunload', checkUnsaved);
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+    });
+
+    onMounted(() => {
+      fetchCourses();
+    });
+
+    return {
+      view,
+      categories,
+      selectedCategories,
+      courses,
+      paginatedCourses,
+      currentPage,
+      totalPages,
+      loading,
+      isChangingToPrev,
+      error,
+      selectedCourse,
+      progress,
+      loadingDetail,
+      errorDetail,
+      selectedLessonIndex,
+      selectedLesson,
+      exercise,
+      response,
+      submitting,
+      showModal,
+      submissionResult,
+      computedStaleProgress,
+      filteredCourses,
+      selectCategory,
+      selectCourse,
+      backToList,
+      selectLesson,
+      backToCourse,
+      dismissStaleProgress,
+      getProgress,
+      getProgressPercentage,
+      debouncedSubmitExercise,
+      debouncedClearExercise,
+      handleInput,
+      nextPage,
+      prevPage,
+      getReadingTime,
+      isOnline,
+      isLessonCompleted,
+    };
+  },
 };
 </script>
 
 <style scoped>
-.courses-container {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+/* Ensure prose styles for Markdown rendering */
+.prose img {
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
 }
-
-/* Search Section */
-.search-section {
-  margin-bottom: 2rem;
+.prose h1, .prose h2, .prose h3 {
+  font-family: 'Crimson Pro', serif;
+  color: #22252a;
 }
-
-.search-container {
-  position: relative;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.search-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-input {
-  flex: 1;
-  padding: 12px 20px;
-  border: 2px solid #fe572a;
-  border-radius: 25px;
-  font-size: 16px;
-  transition: all 0.3s ease;
-}
-
-.search-input:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(254, 87, 42, 0.2);
-}
-
-.search-icon {
-  position: absolute;
-  right: 15px;
-  background: none;
-  border: none;
-  color: #fe572a;
-  cursor: pointer;
-  font-size: 18px;
-}
-
-.search-loader {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 25px;
-}
-
-/* Video Player Section */
-.video-section {
-  margin-bottom: 3rem;
-}
-
-.video-player-container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.video-player-wrapper {
-  position: relative;
-  padding-bottom: 56.25%;
-  height: 0;
-  overflow: hidden;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-}
-
-.youtube-player {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-
-.video-meta {
-  margin-top: 1.5rem;
-}
-
-.video-header {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  margin-bottom: 1rem;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.video-header h2 {
-    margin: 0;
-    margin-right: auto;
-  font-size: 1.5rem;
-  color: var(--text-primary);
-}
-
-.video-header > * {
-  display: flex;
-  align-items: center;
-  
-}
-
-
-
-.bookmark-button {
-  background: none;
-  border: none;
-  color: var(--primary);
-  font-size: 1.5rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 2rem;
-}
-
-.bookmark-button.bookmarked {
-  color: #fe572a;
-}
-
-.bookmark-button:hover {
-  transform: scale(1.1);
-}
-
-.meta-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin: 1.5rem 0;
-}
-
-.meta-item {
-  background: var(--background-light);
-  padding: 1rem;
-  border-radius: 8px;
-}
-
-.label {
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-right: 0.5rem;
-}
-
-.video-actions {
-  margin-top: 1.5rem;
-}
-
-.action-button {
-  padding: 10px 16px;
-  background-color: #fe572a;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.action-button:hover {
-  background-color: #e04a23;
-}
-
-.action-button i {
-  margin-right: 8px;
-}
-
-/* Video Grid */
-.video-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-top: 2rem;
-}
-
-.video-card {
-  background: var(--card-bg);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.video-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-
-.thumbnail-wrapper {
-  position: relative;
-  padding-bottom: 56.25%;
-  background: #000;
-}
-
-.thumbnail-wrapper img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.duration-badge {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-}
-
-.progress-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.progress-fill {
-  height: 100%;
-  background: #fe572a;
-}
-
-.video-info {
-  padding: 1rem;
-}
-
-.video-info h4 {
-  margin: 0 0 0.5rem;
-  font-size: 1rem;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  color: var(--text-primary);
-}
-
-.skill-level {
-  display: inline-block;
-  padding: 4px 8px;
-  background: var(--accent-color);
-  color: white;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  margin: 0.5rem 0;
-}
-
-.video-info p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-
-.bookmark-indicator {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  color: #fe572a;
-  font-size: 1.2rem;
-}
-
-/* Dark Mode */
-.dark-mode .video-card {
-  background: #2d3748;
-}
-
-.dark-mode .video-info h4 {
-  color: #f7fafc;
-}
-
-.dark-mode .video-info p {
-  color: #a0aec0;
-}
-
-.dark-mode .meta-item {
-  background: #4a5568;
-}
-
-.dark-mode .label {
-  color: #cbd5e0;
-}
-
-/* Loader */
-.loader {
-  width: 30px;
-  height: 30px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #fe572a;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .video-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .video-header h2 {
-    font-size: 1.2rem;
-    
-  }
-  .video-header {
-      justify-content: space-between;
-  }
-  
-  .meta-grid {
-    grid-template-columns: 1fr;
-  }
+.prose p, .prose li {
+  font-family: 'Lato', sans-serif;
+  color: #22252a;
 }
 </style>

@@ -24,11 +24,11 @@ export default defineConfig({
     rollupOptions: {
       // Prevent Rollup from externalizing Firebase
       external: [],
-    },},
+    },
+    outDir: 'frontend/dist',
+  },
   server: {
-    proxy: {
-      '/api': 'http://localhost:3000'
-    }
+    
   }
 })
 
