@@ -1,3 +1,4 @@
+
 <template>
   <div :class="['min-h-screen flex flex-col relative', isDarkMode ? 'bg-[#0a0b0b]' : 'bg-white']">
     <!-- Background Grid -->
@@ -126,12 +127,12 @@
           @mouseenter="showTooltip = true"
           @mouseleave="showTooltip = false"
         >
-        Rome wasn't built in a day, but your <span :class="['font-crimson-pro-italic', isDarkMode ? 'text-white' : 'text-[#212121]']">skill.</span> Oh, they're about to get a turbo boost.  
+        Every Dawn Na Battle. Your Weapon? Your Skills.
         </h1>
         <p
           :class="['font-lato text-lg md:text-xl mb-8 max-w-2xl mx-auto leading-relaxed', isDarkMode ? 'text-gray-300' : 'text-gray-600']"
         >
-        Yeah, you. The one with dreams stuck on snooze. We're here to kickstart your journey with challenges that make you go, 'Whoa, did I just do that?'
+        No more scattered tasks. Every morning, Ascendia drops one AI-made challenge for you. You finish am. You collect XP. You climb leaderboard. Show now say you serious.
         </p>
         <div class="flex flex-col sm:flex-row justify-center gap-4">
           <router-link
@@ -169,108 +170,50 @@
       </div>
     </section>
 
-    <!-- Problems We Solve Section -->
+    <!-- Benefits Section -->
     <section :class="['py-10 px-6 md:px-12 relative z-10 section', isDarkMode ? 'text-white' : 'text-black']">
       <div class="max-w-5xl mx-auto">
         <h2
           :class="['text-5xl md:text-4xl font-crimson-pro font-bold text-center mb-7', isDarkMode ? 'text-white' : 'text-gray-800']"
         >
-        We're the antidote to your 'meh' moments. Ready to level up?
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div :class="['text-center p-6 rounded-xl shadow-sm', isDarkMode ? 'bg-black text-white light-shadow' : 'bg-white']">
-            <i :class="['fas fa-tasks text-[#fe572a] text-4xl mb-4', isDarkMode ? 'text-white' : '']"></i>
-            <h3 class="text-xl font-bold mb-2">Got tasks all over?</h3>
-            <p :class="['font-lato text-base', isDarkMode ? 'text-gray-300' : 'text-gray-600']">
-              Look who needs another to-do list to feel like an adult… Just kidding! We'll centralize your goals with one epic daily challenge.
-            </p>
-          </div>
-          <div :class="['text-center p-6 rounded-xl shadow-sm', isDarkMode ? 'bg-black text-white light-shadow' : 'bg-white']">
-            <i :class="['fas fa-book text-[#fe572a] text-4xl mb-4', isDarkMode ? 'text-white' : '']"></i>
-            <h3 class="text-xl font-bold mb-2">Bored of courses?</h3>
-            <p :class="['font-lato text-base', isDarkMode ? 'text-gray-300' : 'text-gray-600']">
-              Swap those snooze-fest lessons for challenges that make you feel like the hero of your own anime saga."
-            </p>
-          </div>
-          <div :class="['text-center p-6 rounded-xl shadow-sm', isDarkMode ? 'bg-black text-white light-shadow' : 'bg-white']">
-            <i :class="['fas fa-comment text-[#fe572a] text-4xl mb-4', isDarkMode ? 'text-white' : '']"></i>
-            <h3 class="text-xl font-bold mb-2">No detailed feedback?</h3>
-            <p :class="['font-lato text-base', isDarkMode ? 'text-gray-300' : 'text-gray-600']">
-              Get instant AI reviews that are sharper than a ninja's katana. 🥷
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Core Features Section -->
-    <section :class="['py-16 px-6 md:px-12 relative z-10 section', isDarkMode ? 'text-white' : 'text-black']">
-      <div class="max-w-5xl mx-auto">
-        <h2
-          :class="['text-3xl md:text-4xl font-crimson-pro font-bold text-center mb-12', isDarkMode ? 'text-white' : 'text-gray-800']"
-        >
-        Features that make you go, 'Why didn't I start this sooner?'
+        Benefits (Wetin You Go Smash)
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div
-            :class="['p-6 rounded-xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200', isDarkMode ? 'bg-black text-white light-shadow' : 'bg-white']"
-          >
-            <h3
-              class="text-[#fe572a] font-crimson-pro font-bold text-xl mb-3"
-            >
-              Daily Challenges
-            </h3>
+          <div :class="['text-center p-6 rounded-xl shadow-sm', isDarkMode ? 'bg-black text-white light-shadow' : 'bg-white']">
+            <h3 class="text-xl font-bold mb-2">Rule Your Day</h3>
             <p :class="['font-lato text-base', isDarkMode ? 'text-gray-300' : 'text-gray-600']">
-              Personalized tasks that match your skill and push you toward your goal like a rocket to the moon. 🌕
+              One clear mission na im. No wahala.
             </p>
           </div>
-          <div
-            :class="['p-6 rounded-xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200', isDarkMode ? 'bg-black text-white light-shadow' : 'bg-white']"
-          >
-            <h3
-              class="text-[#fe572a] font-crimson-pro font-bold text-xl mb-3"
-            >
-              Live Battles & Events
-            </h3>
+          <div :class="['text-center p-6 rounded-xl shadow-sm', isDarkMode ? 'bg-black text-white light-shadow' : 'bg-white']">
+            <h3 class="text-xl font-bold mb-2">Level Up Fast</h3>
             <p :class="['font-lato text-base', isDarkMode ? 'text-gray-300' : 'text-gray-600']">
-              Go head-to-head with others in the leaderboard. Show off your talent like a boss.
+              Swap boring course for gamified quest— you learn by action.
             </p>
           </div>
-          <div
-            :class="['p-6 rounded-xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200', isDarkMode ? 'bg-black text-white light-shadow' : 'bg-white']"
-          >
-            <h3
-              class="text-[#fe572a] font-crimson-pro font-bold text-xl mb-3"
-            >
-              Progression & Rewards
-            </h3>
+          <div :class="['text-center p-6 rounded-xl shadow-sm', isDarkMode ? 'bg-black text-white light-shadow' : 'bg-white']">
+            <h3 class="text-xl font-bold mb-2">Show Face</h3>
             <p :class="['font-lato text-base', isDarkMode ? 'text-gray-300' : 'text-gray-600']">
-              Earn XP, track streaks, and unlock achievements that scream, 'I'm unstoppable!'
+              AI feedback sharp-sharp, leaderboard hot— make dem see you.
             </p>
           </div>
-          <div
-            :class="['p-6 rounded-xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200', isDarkMode ? 'bg-black text-white light-shadow' : 'bg-white']"
-          >
-            <h3
-              class="text-[#fe572a] font-crimson-pro font-bold text-xl mb-3"
-            >
-              Community & Mentorship
-            </h3>
+          <div :class="['text-center p-6 rounded-xl shadow-sm', isDarkMode ? 'bg-black text-white light-shadow' : 'bg-white']">
+            <h3 class="text-xl font-bold mb-2">Crew Vibes</h3>
             <p :class="['font-lato text-base', isDarkMode ? 'text-gray-300' : 'text-gray-600']">
-              Connect with fellow adventurers and build a crew that keeps you moving forward.
+              Link up, share war-stories, rise as one.
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- How It Works Section (3-Step Flow) -->
+    <!-- How It Works Section -->
     <section :class="['py-16 px-6 md:px-12 relative z-10 section', isDarkMode ? 'text-white' : 'text-black']">
       <div class="max-w-5xl mx-auto">
         <h2
           :class="['text-3xl md:text-4xl font-crimson-pro font-bold text-center mb-12', isDarkMode ? 'text-white' : 'text-gray-800']"
         >
-        Your journey to greatness, in three epic steps.
+        How E Dey Work
         </h2>
         <div
           class="grid grid-cols-1 md:grid-cols-3 gap-8 relative before:absolute before:inset-0 before:h-0.5 before:bg-gray-200 before:top-1/2 before:-translate-y-1/2 before:md:block before:hidden"
@@ -285,7 +228,7 @@
             </div>
             <h3 class="text-xl font-bold mb-2">Onboard</h3>
             <p :class="['font-lato text-base', isDarkMode ? 'text-gray-300' : 'text-gray-600']">
-              Tell us about you and your goals. Like kings and queens of old, your kingdom of goals awaits conquest.
+              Yarn us your skills, focus, and gbosa (ambition).
             </p>
           </div>
           <div
@@ -296,9 +239,9 @@
             >
               2
             </div>
-            <h3 class="text-xl font-bold mb-2">Get Your Daily Challenge</h3>
+            <h3 class="text-xl font-bold mb-2">Daily Duel</h3>
             <p :class="['font-lato text-base', isDarkMode ? 'text-gray-300' : 'text-gray-600']">
-              One AI-crafted task to push you forward. Hark, a new dawn beckons – shall thou remain idle or seize it?
+              Grab your AI-forged challenge of the day.
             </p>
           </div>
           <div
@@ -309,9 +252,9 @@
             >
               3
             </div>
-            <h3 class="text-xl font-bold mb-2">Crush & Track</h3>
+            <h3 class="text-xl font-bold mb-2">Crush & Climb</h3>
             <p :class="['font-lato text-base', isDarkMode ? 'text-gray-300' : 'text-gray-600']">
-              Submit, earn XP, and climb the leaderboard. Your legend begins here.
+              Submit, collect XP, jump leaderboard— na so e dey go.
             </p>
           </div>
         </div>

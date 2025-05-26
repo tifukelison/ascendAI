@@ -1,15 +1,17 @@
-<style>
-@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css");
-</style>
-
 <template>
-  <router-view />
+  <div v-if="isAuthChecked">
+    <router-view />
+  </div>
+  <div v-else class="flex items-center justify-center min-h-screen">
+    <p class="text-gray-600 text-lg">Loading...</p>
+  </div>
 </template>
 
 <script>
 import { RouterView } from 'vue-router';
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "vue-router";
+import { ref } from "vue";
 import { auth } from "./firebase";
 
 export default {
@@ -18,6 +20,7 @@ export default {
   },
   setup() {
     const router = useRouter();
+    const isAuthChecked = ref(false); // Track if authentication state has been checked
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -33,7 +36,16 @@ export default {
           router.push("/signin"); // Redirect to sign-in if the route requires authentication
         }
       }
+      isAuthChecked.value = true; // Mark authentication check as complete
     });
+
+    return {
+      isAuthChecked,
+    };
   },
-}
+};
 </script>
+
+<style>
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css");
+</style>

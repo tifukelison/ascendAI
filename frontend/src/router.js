@@ -16,6 +16,7 @@ import Admin from './components/Admin.vue';
 import DashboardHome from './components/DashboardHome.vue';
 import Contact from './components/Contact.vue';
 import AboutUs from './components/AboutUs.vue';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 const routes = [
   { path: '/', name: 'LandingPage', component: LandingPage },
   { path: '/onboarding', component: OnBoarding },
@@ -23,7 +24,7 @@ const routes = [
   { path: '/signin', component: SignIn },
   { path: '/contact', component: Contact },
   {path: '/about', component: AboutUs },
-  { path: '/dashboard', component: DashBoard,
+  { path: '/dashboard', component: DashBoard, meta: {requiresAuth: true},
   children: [
     { path: 'course', component: Courses },
     { path: 'jobs', component: Jobs },

@@ -45,7 +45,7 @@
       </div>
 
       <!-- Welcome and Instructions Section -->
-<div class="p-6 rounded-lg border border-gray-200 shadow-sm mb-8">
+      <div v-if="!preferencesSet || !challengesGenerated" >  <div class="p-6 rounded-lg border border-gray-200 shadow-sm mb-8">
   <h2 class="font-crimson-pro text-3xl text-gray-800 mb-4">Welcome to Your Challenge Hub!</h2>
   <p class="font-lato text-gray-600 mb-4">
     Ahoy, dream chaser! 🚀 Ready to turbocharge your skills and conquer your goals? This is your personal arena of awesomeness where you can set your preferences, track your epic progress, and tackle challenges crafted just for you.
@@ -59,7 +59,8 @@
     </ul>
   </p>
   <p class="font-lato text-gray-600 mt-4">Let's get started and make some magic happen! 🌟</p>
-</div>
+</div></div>
+    
       <!-- Configuration Section -->
       <div v-if="!preferencesSet || !challengesGenerated" class="p-6 rounded-lg border border-gray-200 shadow-sm mb-8">
         <h2 class="font-crimson-pro text-3xl text-gray-800 mb-6">Set Up Your Challenges</h2>
