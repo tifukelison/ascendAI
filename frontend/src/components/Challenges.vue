@@ -9,6 +9,42 @@
       <div class="w-12 h-12 border-4 border-gray-200 border-t-[#fe572a] rounded-full animate-spin"></div>
     </div>
 
+    <!-- Feedback Modal -->
+    <div
+      v-if="showFeedbackModal"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[10000]"
+    >
+      <div class="bg-white rounded-lg p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto">
+        <h3 class="font-crimson-pro text-xl text-gray-800 mb-4">Challenge Feedback</h3>
+        <VueMarkdownRender :source="selectedFeedback" class="font-lato text-gray-800 prose" />
+        <button
+          @click="closeFeedbackModal"
+          class="mt-4 w-full bg-[#fe572a] text-white font-lato font-bold py-2 rounded-lg hover:bg-[#ff8c63] transition-all duration-200"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress Chart Modal -->
+    <div
+      v-if="showChartModal"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[10000]"
+    >
+      <div class="bg-white rounded-lg p-6 max-w-3xl w-full">
+        <h3 class="font-crimson-pro text-xl text-gray-800 mb-4">Progress Over Time</h3>
+        <div class="chart-container">
+          <canvas ref="modalProgressChart" class="h-64 w-full"></canvas>
+        </div>
+        <button
+          @click="showChartModal = false"
+          class="mt-4 w-full bg-[#fe572a] text-white font-lato font-bold py-2 rounded-lg hover:bg-[#ff8c63] transition-all duration-200"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+
     <div class="container w-full px-2 py-6 lg:px-4 relative z-10">
       <!-- Notification Popup -->
       <div
@@ -45,22 +81,24 @@
       </div>
 
       <!-- Welcome and Instructions Section -->
-      <div v-if="!preferencesSet || !challengesGenerated" >  <div class="p-6 rounded-lg border border-gray-200 shadow-sm mb-8">
-  <h2 class="font-crimson-pro text-3xl text-gray-800 mb-4">Welcome to Your Challenge Hub!</h2>
-  <p class="font-lato text-gray-600 mb-4">
-    Ahoy, dream chaser! 🚀 Ready to turbocharge your skills and conquer your goals? This is your personal arena of awesomeness where you can set your preferences, track your epic progress, and tackle challenges crafted just for you.
-  </p>
-  <p class="font-lato text-gray-600">
-    <strong>Here's the game plan:</strong>
-    <ul class="list-disc list-inside">
-      <li>Set Up Your Challenges: Choose how often you want to be challenged. Daily, thrice a week, or weekly—your call! It's like choosing your own adventure, but with more XP.</li>
-      <li>Track Your Progress: Keep an eye on your streaks, XP, and badges. Every challenge completed is a step closer to mastery. Like a ninja leveling up, you're unstoppable!</li>
-      <li>Accept and Conquer: Dive into today's challenge or peek at what's coming up. Remember, every challenge is a chance to shine. If you're waiting for a sign, this is it. Literally.</li>
-    </ul>
-  </p>
-  <p class="font-lato text-gray-600 mt-4">Let's get started and make some magic happen! 🌟</p>
-</div></div>
-    
+      <div v-if="!preferencesSet || !challengesGenerated" class="p-6 rounded-lg border border-gray-200 shadow-sm mb-8">
+        <h2 class="font-crimson-pro text-3xl text-gray-800 mb-4">Welcome to Your Challenge Hub!</h2>
+        <p class="font-lato text-gray-600 mb-4">
+          Ahoy, dream chaser! 🚀 Ready to turbocharge your skills and conquer your goals? This is your personal arena of awesomeness where you can set your preferences, track your epic progress, and tackle challenges crafted just for you.
+        </p>
+        <p class="font-lato text-gray-600">
+          <strong>Here's the game plan:</strong>
+          <ul class="list-disc list-inside">
+            <li>Set Up Your Challenges: Choose how often you want to be challenged. Daily, thrice a week, or weekly—your call! It's like choosing your own adventure, but with more XP.</li>
+            <li>Track Your Progress: Keep an eye on your streaks, XP, and badges. Every challenge completed is a step closer to mastery. Like a ninja leveling up, you're unstoppable!</li>
+            <li>Accept and Conquer: Dive into today's challenge or peek at what's coming up. Remember, every challenge is a chance to shine. If you're waiting for a sign, this is it. Literally.</li>
+          Aldous Huxley
+            <li>Revisit Feedback: Click on past challenges to review feedback and refine your skills.</li>
+          </ul>
+        </p>
+        <p class="font-lato text-gray-600 mt-4">Let's get started and make some magic happen! 🌟</p>
+      </div>
+
       <!-- Configuration Section -->
       <div v-if="!preferencesSet || !challengesGenerated" class="p-6 rounded-lg border border-gray-200 shadow-sm mb-8">
         <h2 class="font-crimson-pro text-3xl text-gray-800 mb-6">Set Up Your Challenges</h2>
@@ -102,196 +140,235 @@
       <div v-if="preferencesSet && challengesGenerated" class="flex flex-col lg:flex-row lg:gap-8">
         <!-- Main Challenges Content -->
         <div class="flex-1">
-          <!-- Progress Section -->
-          <div class="p-6 rounded-lg border border-gray-200 shadow-sm mb-8">
-            <h2 class="font-crimson-pro text-3xl text-gray-800 mb-4">
-              Your Progress, {{ username }}
-            </h2>
-            <p class="font-lato text-gray-600 mb-4">
-              Skill: <strong>{{ focusSkill }}</strong> | Goal: <strong>{{ goal }}</strong> | XP: <strong>{{ userXp }}</strong>
-            </p>
-            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
-              <div
-                class="bg-[#fe572a] h-2.5 rounded-full transition-width duration-300"
-                :style="{ width: `${progressPercentage}%` }"
-              ></div>
+          <!-- Progress and Progress Over Time Section -->
+          <div class="flex flex-col lg:flex-row gap-8 mb-8">
+            <!-- Progress Section -->
+            <div class="p-6 rounded-lg border border-gray-200 shadow-sm lg:w-1/3">
+              <h2 class="font-crimson-pro text-3xl text-gray-800 mb-4">
+                Your Progress, {{ username }}
+              </h2>
+              <p class="font-lato text-gray-600 mb-4">
+                Skill: <strong>{{ focusSkill }}</strong> | Goal: <strong>{{ goal }}</strong> | XP: <strong>{{ userXp }}</strong>
+              </p>
+              <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                <div
+                  class="bg-[#fe572a] h-2.5 rounded-full transition-width duration-300"
+                  :style="{ width: `${progressPercentage}%` }"
+                ></div>
+              </div>
+              <p class="font-lato text-sm text-gray-600 mb-2">
+                {{ completedChallenges }} / 30 Challenges ({{ progressPercentage }}%)
+              </p>
+              <div class="flex flex-wrap gap-4 font-lato text-gray-600">
+                <p><strong>Streak:</strong> {{ streak }} days</p>
+                <p><strong>Longest Streak:</strong> {{ longestStreak }} days</p>
+                <p><strong>Badges:</strong> {{ badges.length ? badges.join(', ') : 'None yet!' }}</p>
+              </div>
             </div>
-            <p class="font-lato text-sm text-gray-600 mb-2">
-              {{ completedChallenges }} / 30 Challenges ({{ progressPercentage }}%)
-            </p>
-            <div class="flex flex-wrap gap-4 font-lato text-gray-600">
-              <p><strong>Streak:</strong> {{ streak }} days</p>
-              <p><strong>Longest Streak:</strong> {{ longestStreak }} days</p>
-              <p><strong>Badges:</strong> {{ badges.length ? badges.join(', ') : 'None yet!' }}</p>
+
+            <!-- Progress Over Time Section -->
+            <div
+              class="p-6 rounded-lg border border-gray-200 shadow-sm lg:w-2/3 cursor-pointer"
+              @click="showChartModal = true"
+            >
+              <h3 class="font-crimson-pro text-xl text-gray-800 mb-4">Progress Over Time</h3>
+              <div class="chart-container">
+                <canvas ref="progressChart" class="h-[150px]"></canvas>
+              </div>
             </div>
           </div>
 
           <!-- Current and Upcoming Challenges Section -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div class="p-6 rounded-lg border border-gray-200 shadow-sm">
-              <div v-if="currentChallenge">
-                <h3 class="font-crimson-pro text-xl text-gray-800 mb-4">Today's Challenge</h3>
-                <div class="border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-                  <h4 class="font-crimson-pro text-lg font-bold text-gray-800 mb-2">{{ currentChallenge.description }}</h4>
-                  <p class="font-lato text-sm text-gray-600 mb-1"><strong>Objective:</strong> {{ currentChallenge.objective }}</p>
-                  <div class="flex flex-wrap gap-4 font-lato text-sm text-gray-600 mb-2">
-                    <p><strong>Time:</strong> {{ currentChallenge.estimated_time }}</p>
-                    <p><strong>XP:</strong> {{ currentChallenge.xp_value }}</p>
-                    <p><strong>Remaining:</strong> {{ countdown }}</p>
-                  </div>
-                  <div v-if="!hasStarted">
-                    <button
-                      @click="startChallenge"
-                      class="w-full bg-[#fe572a] text-white font-lato font-bold py-3 rounded-lg shadow hover:bg-[#ff8c63] hover:-translate-y-1 transition-all duration-200"
-                    >
-                      Accept/Start
-                    </button>
-                  </div>
-                  <div v-else>
-                    <p class="font-lato text-sm text-gray-600 mb-2">Started: {{ startTime }}</p>
-                    <button
-                      v-if="!showSubmissionInput"
-                      @click="showSubmissionInput = true"
-                      class="w-full bg-[#fe572a] text-white font-lato font-bold py-3 rounded-lg shadow hover:bg-[#ff8c63] hover:-translate-y-1 transition-all duration-200"
-                    >
-                      Submit Work
-                    </button>
-                    <div v-if="showSubmissionInput" class="mt-4">
-                      <p class="font-lato text-sm text-gray-600 mb-2">Submit your work (code or text):</p>
-                      <div class="mb-4">
-                        <textarea
-                          v-model="userSubmission"
-                          placeholder="Enter your work here..."
-                          class="w-full p-4 bg-white border-2 border-gray-300 rounded-lg font-lato text-gray-800 resize-none focus:outline-none focus:border-[#fe572a] transition-all duration-200 scrollbar-none h-32"
-                        ></textarea>
-                      </div>
-                      <div class="flex gap-2">
-                        <button
-                          @click="submitChallenge"
-                          class="bg-[#fe572a] text-white font-lato font-bold py-2 px-4 rounded-lg hover:bg-[#ff8c63] hover:-translate-y-1 transition-all duration-200"
-                          :disabled="!userSubmission"
-                        >
-                          Submit Work
-                        </button>
-                        <button
-                          @click="showSubmissionInput = false"
-                          class="bg-gray-200 text-gray-800 font-lato py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors duration-200"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                      <div v-if="isSubmitting" class="mt-4 flex justify-center">
-                        <div class="w-8 h-8 border-4 border-gray-200 border-t-[#fe572a] rounded-full animate-spin"></div>
-                      </div>
-                      <div v-if="feedback" class="mt-4 p-4 bg-gray-100 rounded-lg max-h-64 overflow-y-auto">
-                        <h4 class="font-lato font-bold text-gray-800 mb-2">Feedback:</h4>
-                        <VueMarkdownRender :source="feedback" class="font-lato text-gray-800 prose" />
-                        <button
-                          v-if="verificationResult && verificationResult.passed"
-                          @click="handleFeedbackResponse"
-                          class="mt-4 w-full bg-[#fe572a] text-white font-lato font-bold py-2 rounded-lg hover:bg-[#ff8c63] hover:-translate-y-1 transition-all duration-200"
-                        >
-                          Okay, Next Challenge
-                        </button>
-                        <button
-                          v-else
-                          @click="retrySubmission"
-                          class="mt-4 w-full bg-[#fe572a] text-white font-lato font-bold py-2 rounded-lg hover:bg-[#ff8c63] hover:-translate-y-1 transition-all duration-200"
-                        >
-                          Retry
-                        </button>
-                      </div>
+          <div class="p-6 rounded-lg border border-gray-200 shadow-sm mb-8">
+            <div v-if="currentChallenge">
+              <h3 class="font-crimson-pro text-xl text-gray-800 mb-4">Current Challenge</h3>
+              <div class="border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <h4 class="font-crimson-pro text-lg font-bold text-gray-800 mb-2">{{ currentChallenge.description }}</h4>
+                <p class="font-lato text-sm text-gray-600 mb-1"><strong>Objective:</strong> {{ currentChallenge.objective }}</p>
+                <div class="flex flex-wrap gap-4 font-lato text-sm text-gray-600 mb-2">
+                  <p><strong>Time:</strong> {{ currentChallenge.estimated_time }}</p>
+                  <p><strong>XP:</strong> {{ currentChallenge.xp_value }}</p>
+                  <p><strong>Remaining:</strong> {{ countdown }}</p>
+                </div>
+                <div v-if="!hasStarted">
+                  <button
+                    @click="startChallenge"
+                    class="w-full bg-[#fe572a] text-white font-lato font-bold py-3 rounded-lg shadow hover:bg-[#ff8c63] hover:-translate-y-1 transition-all duration-200"
+                  >
+                    Accept/Start
+                  </button>
+                </div>
+                <div v-else>
+                  <p class="font-lato text-sm text-gray-600 mb-2">Started: {{ startTime }}</p>
+                  <button
+                    v-if="!showSubmissionInput"
+                    @click="showSubmissionInput = true"
+                    class="w-full bg-[#fe572a] text-white font-lato font-bold py-3 rounded-lg shadow hover:bg-[#ff8c63] hover:-translate-y-1 transition-all duration-200"
+                  >
+                    Submit Work
+                  </button>
+                  <div v-if="showSubmissionInput" class="mt-4">
+                    <p class="font-lato text-sm text-gray-600 mb-2">Submit your work (code or text):</p>
+                    <div class="mb-4">
+                      <textarea
+                        v-model="userSubmission"
+                        placeholder="Enter your work here..."
+                        class="w-full p-4 bg-white border-2 border-gray-300 rounded-lg font-lato text-gray-800 resize-none focus:outline-none focus:border-[#fe572a] transition-all duration-200 scrollbar-none h-32"
+                      ></textarea>
+                    </div>
+                    <div class="flex gap-2">
+                      <button
+                        @click="submitChallenge"
+                        class="bg-[#fe572a] text-white font-lato font-bold py-2 px-4 rounded-lg hover:bg-[#ff8c63] hover:-translate-y-1 transition-all duration-200"
+                        :disabled="!userSubmission"
+                      >
+                        Submit Work
+                      </button>
+                      <button
+                        @click="showSubmissionInput = false"
+                        class="bg-gray-200 text-gray-800 font-lato py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    <p class="font-lato text-sm text-gray-600 mt-2">
+                      You can revisit feedback by clicking on a past challenge.
+                    </p>
+                    <div v-if="isSubmitting" class="mt-4 flex justify-center">
+                      <div class="w-8 h-8 border-4 border-gray-200 border-t-[#fe572a] rounded-full animate-spin"></div>
+                    </div>
+                    <div v-if="feedback" class="mt-4 p-4 bg-gray-100 rounded-lg max-h-64 overflow-y-auto">
+                      <h4 class="font-lato font-bold text-gray-800 mb-2">Feedback:</h4>
+                      <VueMarkdownRender :source="feedback" class="font-lato text-gray-800 prose" />
+                      <button
+                        v-if="verificationResult && verificationResult.passed"
+                        @click="handleFeedbackResponse"
+                        class="mt-4 w-full bg-[#fe572a] text-white font-lato font-bold py-2 rounded-lg hover:bg-[#ff8c63] hover:-translate-y-1 transition-all duration-200"
+                      >
+                        Okay, Next Challenge
+                      </button>
+                      <button
+                        v-else
+                        @click="retrySubmission"
+                        class="mt-4 w-full bg-[#fe572a] text-white font-lato font-bold py-2 rounded-lg hover:bg-[#ff8c63] hover:-translate-y-1 transition-all duration-200"
+                      >
+                        Retry
+                      </button>
                     </div>
                   </div>
                 </div>
+              </div>
+              <div v-if="currentChallenge">
+                <!-- Existing content for currentChallenge -->
               </div>
               <div v-else>
                 <p class="font-lato text-gray-600">No challenge available for today. Check upcoming challenges or generate new ones.</p>
               </div>
-
-              <div v-if="upcomingChallenges.length" class="mt-6">
-                <h3 class="font-crimson-pro text-xl text-gray-800 mb-4">Upcoming Challenges</h3>
-                <div class="space-y-4">
-                  <div
-                    v-for="challenge in paginatedUpcomingChallenges"
-                    :key="challenge.challenge_id"
-                    @click="showLockedMessage"
-                    class="border border-gray-200 rounded-lg p-4 shadow-sm opacity-50 cursor-pointer relative"
-                    :class="{ 'bg-orange-50 border-orange-300': challenge.challenge_id === nextChallengeId }"
-                  >
-                    <div class="absolute top-2 right-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="#fe572a"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M12 11c0-1.1.9-2 2-2h2a2 2 0 012 2v3a2 2 0 01-2 2h-2a2 2 0 01-2-2v-3zm0 0V8a4 4 0 018 0v3"
-                        />
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M5 15h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2z"
-                        />
-                      </svg>
-                    </div>
-                    <span
-                      v-if="challenge.challenge_id === nextChallengeId"
-                      class="absolute top-2 left-2 bg-[#fe572a] text-white text-xs font-lato font-bold px-2 py-1 rounded-full"
-                    >
-                      Next
-                    </span>
-                    <p class="font-crimson-pro text-lg font-bold text-gray-800">{{ challenge.description }}</p>
-                    <p class="font-lato text-sm text-gray-600"><strong>Objective:</strong> {{ challenge.objective }}</p>
-                    <p class="font-lato text-sm text-gray-600"><strong>Date:</strong> {{ challenge.date }}</p>
-                  </div>
-                </div>
-                <div class="mt-6 flex justify-center items-center" v-if="upcomingChallenges.length > 0">
-                  <button
-                    @click="prevPage"
-                    :disabled="currentPage === 1"
-                    class="font-lato font-bold py-2 px-4 rounded-l transition-all duration-200"
-                    :class="currentPage === 1 ? 'bg-gray-200 text-gray-800 cursor-not-allowed' : 'bg-[#fe572a] text-white hover:bg-[#ff8c63]'"
-                  >
-                    Prev
-                  </button>
-                  <span class="px-4 py-2 text-gray-700 bg-gray-100 font-lato">Page {{ currentPage }} of {{ totalPages }}</span>
-                  <button
-                    @click="nextPage"
-                    :disabled="currentPage === totalPages"
-                    class="font-lato font-bold py-2 px-4 rounded-r transition-all duration-200"
-                    :class="currentPage === totalPages ? 'bg-gray-200 text-gray-800 cursor-not-allowed' : 'bg-[#fe572a] text-white hover:bg-[#ff8c63]'"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="p-6 rounded-lg border border-gray-200 shadow-sm">
-              <h3 class="font-crimson-pro text-xl text-gray-800 mb-4">Progress Over Time</h3>
-              <div class="chart-container">
-                <canvas ref="progressChart" class="h-64"></canvas>
-              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Past Challenges Section -->
-        <div v-if="pastChallenges.length" class="p-6 rounded-lg border border-gray-200 shadow-sm lg:w-1/3">
-          <h3 class="font-crimson-pro text-xl text-gray-800 mb-4">Past Challenges</h3>
-          <div class="space-y-4">
-            <div v-for="challenge in pastChallenges" :key="challenge.challenge_id" class="border border-gray-200 rounded-lg p-4 shadow-sm opacity-50">
-              <p class="font-crimson-pro text-lg font-bold text-gray-800">{{ challenge.description }}</p>
-              <p class="font-lato text-sm text-gray-600"><strong>Objective:</strong> {{ challenge.objective }}</p>
-              <p class="font-lato text-sm text-gray-600"><strong>Date:</strong> {{ challenge.date }}</p>
-              <p class="font-lato text-sm text-gray-600"><strong>Status:</strong> {{ challenge.status }}</p>
+          <!-- Upcoming and Past Challenges Section -->
+          <div class="flex flex-col lg:flex-row lg:gap-8">
+            <!-- Upcoming Challenges -->
+            <div v-if="upcomingChallenges.length" class="lg:w-1/2 mb-8">
+              <h3 class="font-crimson-pro text-xl text-gray-800 mb-4">Upcoming Challenges</h3>
+              <div class="space-y-4">
+                <div
+                  v-for="challenge in paginatedUpcomingChallenges"
+                  :key="challenge.challenge_id"
+                  @click="showLockedMessage"
+                  class="border border-gray-200 rounded-lg p-4 shadow-sm opacity-50 cursor-pointer relative"
+                  :class="{ 'bg-orange-50 border-orange-300': challenge.challenge_id === nextChallengeId }"
+                >
+                  <div class="absolute top-2 right-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="#fe572a"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 11c0-1.1.9-2 2-2h2a2 2 0 012 2v3a2 2 0 01-2 2h-2a2 2 0 01-2-2v-3zm0 0V8a4 4 0 018 0v3"
+                      />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 15h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <span
+                    v-if="challenge.challenge_id === nextChallengeId"
+                    class="absolute top-2 left-2 bg-[#fe572a] text-white text-xs font-lato font-bold px-2 py-1 rounded-full"
+                  >
+                    Next
+                  </span>
+                  <p class="font-crimson-pro text-lg font-bold text-gray-800">{{ challenge.description }}</p>
+                  <p class="font-lato text-sm text-gray-600"><strong>Objective:</strong> {{ challenge.objective }}</p>
+                  <p class="font-lato text-sm text-gray-600"><strong>Date:</strong> {{ challenge.date }}</p>
+                </div>
+              </div>
+              <div class="mt-6 flex justify-center items-center" v-if="upcomingChallenges.length > 0">
+                <button
+                  @click="prevPage"
+                  :disabled="currentPage === 1"
+                  class="font-lato font-bold py-2 px-4 rounded-l transition-all duration-200"
+                  :class="currentPage === 1 ? 'bg-gray-200 text-gray-800 cursor-not-allowed' : 'bg-[#fe572a] text-white hover:bg-[#ff8c63]'"
+                >
+                  Prev
+                </button>
+                <span class="px-4 py-2 text-gray-700 bg-gray-100 font-lato">Page {{ currentPage }} of {{ totalPages }}</span>
+                <button
+                  @click="nextPage"
+                  :disabled="currentPage === totalPages"
+                  class="font-lato font-bold py-2 px-4 rounded-r transition-all duration-200"
+                  :class="currentPage === totalPages ? 'bg-gray-200 text-gray-800 cursor-not-allowed' : 'bg-[#fe572a] text-white hover:bg-[#ff8c63]'"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+
+            <!-- Past Challenges -->
+            <div v-if="pastChallenges.length" class="lg:w-1/2">
+              <h3 class="font-crimson-pro text-xl text-gray-800 mb-4">Past Challenges</h3>
+              <div class="space-y-4">
+                <div
+                  v-for="challenge in paginatedPastChallenges"
+                  :key="challenge.challenge_id"
+                  @click="fetchChallengeFeedback(challenge.challenge_id)"
+                  class="border border-gray-200 rounded-lg p-4 shadow-sm opacity-50 cursor-pointer"
+                >
+                  <p class="font-crimson-pro text-lg font-bold text-gray-800">{{ challenge.description }}</p>
+                  <p class="font-lato text-sm text-gray-600"><strong>Objective:</strong> {{ challenge.objective }}</p>
+                  <p class="font-lato text-sm text-gray-600"><strong>Date:</strong> {{ challenge.date }}</p>
+                  <p class="font-lato text-sm text-gray-600"><strong>Status:</strong> {{ challenge.status }}</p>
+                </div>
+              </div>
+              <div class="mt-6 flex justify-center items-center" v-if="pastChallenges.length > 0">
+                <button
+                  @click="prevPastPage"
+                  :disabled="pastCurrentPage === 1"
+                  class="font-lato font-bold py-2 px-4 rounded-l transition-all duration-200"
+                  :class="pastCurrentPage === 1 ? 'bg-gray-200 text-gray-800 cursor-not-allowed' : 'bg-[#fe572a] text-white hover:bg-[#ff8c63]'"
+                >
+                  Prev
+                </button>
+                <span class="px-4 py-2 text-gray-700 bg-gray-100 font-lato">Page {{ pastCurrentPage }} of {{ pastTotalPages }}</span>
+                <button
+                  @click="nextPastPage"
+                  :disabled="pastCurrentPage === pastTotalPages"
+                  class="font-lato font-bold py-2 px-4 rounded-r transition-all duration-200"
+                  :class="pastCurrentPage === pastTotalPages ? 'bg-gray-200 text-gray-800 cursor-not-allowed' : 'bg-[#fe572a] text-white hover:bg-[#ff8c63]'"
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -303,7 +380,7 @@
 <script>
 import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { doc, getDoc, updateDoc, setDoc, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { generateChallenges, provideChallengeFeedback, verifyChallengeSubmission } from '../callGenerateChallenges';
 import Chart from 'chart.js/auto';
@@ -346,8 +423,12 @@ export default {
     const feedback = ref('');
     const verificationResult = ref(null);
     const progressChart = ref(null);
+    const modalProgressChart = ref(null);
+    const showFeedbackModal = ref(false);
+    const selectedFeedback = ref('');
+    const showChartModal = ref(false);
 
-    // Pagination
+    // Pagination for Upcoming Challenges
     const currentPage = ref(1);
     const challengesPerPage = 3;
     const totalPages = computed(() => Math.ceil(upcomingChallenges.value.length / challengesPerPage));
@@ -355,6 +436,16 @@ export default {
       const start = (currentPage.value - 1) * challengesPerPage;
       const end = start + challengesPerPage;
       return upcomingChallenges.value.slice(start, end);
+    });
+
+    // Pagination for Past Challenges
+    const pastCurrentPage = ref(1);
+    const pastChallengesPerPage = 3;
+    const pastTotalPages = computed(() => Math.ceil(pastChallenges.value.length / pastChallengesPerPage));
+    const paginatedPastChallenges = computed(() => {
+      const start = (pastCurrentPage.value - 1) * pastChallengesPerPage;
+      const end = start + pastChallengesPerPage;
+      return pastChallenges.value.slice(start, end);
     });
 
     // Next Upcoming Challenge
@@ -424,7 +515,7 @@ export default {
       const userDoc = await getDoc(userDocRef);
       if (userDoc.exists()) {
         const data = userDoc.data();
-        username.value = data.name || 'User'; // Use 'name' from Firestore
+        username.value = data.name || 'User';
         userXp.value = data.xp || 0;
         focusSkill.value = data.focusSkill || 'Unknown Skill';
         goal.value = data.goal || 'No goal set';
@@ -440,8 +531,6 @@ export default {
       if (preferencesSet.value && challengesGenerated.value) {
         await loadChallenges(user.uid);
         initializeChart();
-      } else {
-        console.log('Preferences or challenges not set. Showing setup form.');
       }
     });
 
@@ -449,7 +538,6 @@ export default {
     const loadChallenges = async (userId) => {
       console.log('Loading challenges for user:', userId);
       const today = new Date().toISOString().split('T')[0];
-      console.log('Today’s date:', today);
 
       const challengeDocRef = doc(db, 'challenges', focusSkill.value);
       const challengeDoc = await getDoc(challengeDocRef);
@@ -484,48 +572,26 @@ export default {
             date: userChallenge.date,
             status: userChallenge.status,
             start_time: userChallenge.start_time,
-            verification: userChallenge.verification
+            verification: userChallenge.verification,
           };
           if (userChallenge.date < today || userChallenge.status === 'completed' || userChallenge.status === 'uncompleted') {
             pastChallenges.value.push(challengeData);
             if (userChallenge.status === 'completed') completedChallenges.value++;
-          } else if (userChallenge.date === today && userChallenge.status === 'pending') {
-            currentChallenge.value = challengeData;
-            hasStarted.value = !!userChallenge.start_time;
-            startTime.value = userChallenge.start_time ? new Date(userChallenge.start_time).toLocaleString() : null;
-          } else if (userChallenge.date > today && userChallenge.status === 'pending') {
-            upcomingChallenges.value.push(challengeData);
+          } else if (userChallenge.status === 'pending') {
+            if (!currentChallenge.value) {
+              currentChallenge.value = challengeData;
+              hasStarted.value = !!userChallenge.start_time;
+              startTime.value = userChallenge.start_time ? new Date(userChallenge.start_time).toLocaleString() : null;
+            } else {
+              upcomingChallenges.value.push(challengeData);
+            }
           }
         } else {
           console.warn('No matching global challenge found for challenge_id:', userChallenge.challenge_id);
         }
       }
 
-      if (!currentChallenge.value) {
-        const nextChallenge = pendingChallenges
-          .filter(c => c.status === 'pending' && c.date >= today)
-          .sort((a, b) => a.date.localeCompare(b.date))[0];
-        if (nextChallenge) {
-          const challenge = challenges.value.find(c => c.challenge_id === nextChallenge.challenge_id);
-          if (challenge) {
-            currentChallenge.value = {
-              ...challenge,
-              date: nextChallenge.date,
-              status: nextChallenge.status,
-              start_time: nextChallenge.start_time,
-              verification: nextChallenge.verification
-            };
-            hasStarted.value = !!nextChallenge.start_time;
-            startTime.value = nextChallenge.start_time ? new Date(nextChallenge.start_time).toLocaleString() : null;
-            console.log('Selected next challenge as current:', currentChallenge.value);
-          } else {
-            console.warn('No matching global challenge for next challenge_id:', nextChallenge.challenge_id);
-          }
-        } else {
-          console.log('No pending challenges available for today or future.');
-        }
-      }
-
+      upcomingChallenges.value.sort((a, b) => a.date.localeCompare(b.date));
       console.log('Current challenge:', currentChallenge.value);
       console.log('Upcoming challenges:', upcomingChallenges.value);
       console.log('Past challenges:', pastChallenges.value);
@@ -551,7 +617,7 @@ export default {
           skip_count: 0,
           challenges_generated: false,
           completion_dates: [],
-          xp: 0 // Initialize xp
+          xp: 0,
         });
 
         const userDoc = await getDoc(userDocRef);
@@ -576,18 +642,15 @@ export default {
         }));
 
         if (!userChallengeDoc.exists()) {
-          console.log('Creating user_challenges document with challenges for user:', user.uid);
           await setDoc(userChallengeDocRef, {
             user_id: user.uid,
             pending_challenges: newChallenges,
           });
-          console.log('Successfully created user_challenges document');
         } else {
           const existingChallenges = userChallengeDoc.data().pending_challenges || [];
           await updateDoc(userChallengeDocRef, {
             pending_challenges: [...existingChallenges, ...newChallenges],
           });
-          console.log('Successfully updated user_challenges document');
         }
 
         showNotificationModal(result.message, 'success');
@@ -666,17 +729,10 @@ export default {
         const userChallengeDoc = await getDoc(userChallengeDocRef);
 
         if (!userChallengeDoc.exists()) {
-          console.log('Creating user_challenges document for user:', user.uid);
-          try {
-            await setDoc(userChallengeDocRef, {
-              user_id: user.uid,
-              pending_challenges: [],
-            });
-            console.log('Successfully created user_challenges document');
-          } catch (error) {
-            console.error('Failed to create user_challenges document:', error);
-            throw new Error('Failed to initialize user challenges');
-          }
+          await setDoc(userChallengeDocRef, {
+            user_id: user.uid,
+            pending_challenges: [],
+          });
         }
 
         const feedbackDocRef = doc(db, 'user_challenges', user.uid, 'feedback', currentChallenge.value.challenge_id);
@@ -687,25 +743,7 @@ export default {
           timestamp: new Date().toISOString(),
         };
 
-        console.log('Submitting feedback:', {
-          ...feedbackData,
-          challengeId: currentChallenge.value.challenge_id,
-        });
-
-        let attempts = 0;
-        const maxAttempts = 3;
-        while (attempts < maxAttempts) {
-          try {
-            await setDoc(feedbackDocRef, feedbackData);
-            console.log('Successfully wrote feedback to Firestore');
-            break;
-          } catch (error) {
-            attempts++;
-            console.warn(`Feedback write attempt ${attempts} failed:`, error);
-            if (attempts === maxAttempts) throw error;
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-        }
+        await setDoc(feedbackDocRef, feedbackData);
 
         const updatedUserChallengeDoc = await getDoc(userChallengeDocRef);
         let pendingChallenges = updatedUserChallengeDoc.exists() ? updatedUserChallengeDoc.data().pending_challenges || [] : [];
@@ -713,14 +751,7 @@ export default {
 
         if (challengeIndex !== -1) {
           pendingChallenges[challengeIndex].verification = verificationResultData.passed;
-          console.log('Updating pending challenges:', pendingChallenges);
-          try {
-            await updateDoc(userChallengeDocRef, { pending_challenges: pendingChallenges });
-            console.log('Successfully updated pending challenges');
-          } catch (error) {
-            console.error('Failed to update pending challenges:', error);
-            throw error;
-          }
+          await updateDoc(userChallengeDocRef, { pending_challenges: pendingChallenges });
         } else {
           console.warn('Challenge not found in pending_challenges:', currentChallenge.value.challenge_id);
           showNotificationModal('Challenge not found. Please try again.', 'error');
@@ -754,8 +785,6 @@ export default {
           let pendingChallenges = userChallengeDoc.exists() ? userChallengeDoc.data().pending_challenges || [] : [];
           const challengeIndex = pendingChallenges.findIndex(c => c.challenge_id === currentChallenge.value.challenge_id);
 
-          console.log('Challenge index:', challengeIndex, 'Pending challenges:', pendingChallenges);
-
           if (challengeIndex !== -1) {
             pendingChallenges[challengeIndex].status = 'completed';
             await updateDoc(userChallengeDocRef, { pending_challenges: pendingChallenges });
@@ -777,7 +806,7 @@ export default {
                 streak: userStreak,
                 longest_streak: userLongestStreak,
                 completion_dates: completionDates,
-                xp: currentXp
+                xp: currentXp,
               });
               streak.value = userStreak;
               longestStreak.value = userLongestStreak;
@@ -787,10 +816,12 @@ export default {
             completedChallenges.value++;
             showNotificationModal('Challenge completed successfully!', 'success');
           } else {
-            console.warn('Challenge not found in pending_challenges:', currentChallenge.value.challenge_id);
             showNotificationModal('Challenge not found. Please try again.', 'error');
             return;
           }
+        } else {
+          showNotificationModal('Please retry the current challenge before proceeding.', 'error');
+          return;
         }
 
         showSubmissionInput.value = false;
@@ -803,8 +834,8 @@ export default {
         await loadChallenges(user.uid);
         initializeChart();
 
-        if (!currentChallenge.value) {
-          showNotificationModal('No more challenges available for today. Check upcoming challenges or generate new ones.', 'info');
+        if (!currentChallenge.value && upcomingChallenges.value.length === 0) {
+          showNotificationModal('No more challenges available. Generate new ones.', 'info');
         }
       } catch (error) {
         console.error('Error advancing to next challenge:', error);
@@ -837,6 +868,36 @@ export default {
       }
     };
 
+    // Fetch Challenge Feedback
+    const fetchChallengeFeedback = async (challengeId) => {
+      const user = auth.currentUser;
+      if (!user) {
+        showNotificationModal('You must be signed in to view feedback.', 'error');
+        router.push('/signin');
+        return;
+      }
+
+      try {
+        const feedbackDocRef = doc(db, 'user_challenges', user.uid, 'feedback', challengeId);
+        const feedbackDoc = await getDoc(feedbackDocRef);
+        if (feedbackDoc.exists()) {
+          selectedFeedback.value = feedbackDoc.data().feedback || 'No feedback available.';
+          showFeedbackModal.value = true;
+        } else {
+          showNotificationModal('No feedback found for this challenge.', 'error');
+        }
+      } catch (error) {
+        console.error('Error fetching feedback:', error);
+        showNotificationModal(`Failed to fetch feedback: ${error.message}`, 'error');
+      }
+    };
+
+    // Close Feedback Modal
+    const closeFeedbackModal = () => {
+      showFeedbackModal.value = false;
+      selectedFeedback.value = '';
+    };
+
     // Notification Modal
     const showNotificationModal = (message, type) => {
       notificationMessage.value = message;
@@ -856,7 +917,7 @@ export default {
       showNotificationModal('Please complete the current challenge first.', 'error');
     };
 
-    // Pagination Controls
+    // Pagination Controls for Upcoming Challenges
     const prevPage = () => {
       if (currentPage.value > 1) {
         currentPage.value--;
@@ -869,76 +930,152 @@ export default {
       }
     };
 
+    // Pagination Controls for Past Challenges
+    const prevPastPage = () => {
+      if (pastCurrentPage.value > 1) {
+        pastCurrentPage.value--;
+      }
+    };
+
+    const nextPastPage = () => {
+      if (pastCurrentPage.value < pastTotalPages.value) {
+        pastCurrentPage.value++;
+      }
+    };
+
     // Initialize Chart
     const initializeChart = () => {
       if (progressChart.value && progressChart.value.chart) {
         progressChart.value.chart.destroy();
       }
+      if (modalProgressChart.value && modalProgressChart.value.chart) {
+        modalProgressChart.value.chart.destroy();
+      }
 
-      const ctx = progressChart.value.getContext('2d');
       const xpData = pastChallenges.value
         .filter(ch => ch.status === 'completed')
         .map(ch => ch.xp_value || 0);
       const labels = pastChallenges.value
         .filter(ch => ch.status === 'completed')
-        .map((_, index) => `Challenge ${index + 1}`);
+        .map((_, index) => `${index + 1}`);
 
-      const chartWidth = Math.min(Math.max(200, xpData.length * 50), 400); // Dynamic width based on data points
-
-      progressChart.value.chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels.length ? labels : ['No Data'],
-          datasets: [{
-            label: 'XP Earned',
-            data: xpData.length ? xpData : [0],
-            borderColor: '#fe572a',
-            backgroundColor: (context) => {
-              const ctx = context.chart.ctx;
-              const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-              gradient.addColorStop(0, 'rgba(254, 87, 42, 0.5)');
-              gradient.addColorStop(1, 'rgba(254, 87, 42, 0)');
-              return gradient;
-            },
-            fill: true,
-            tension: 0.4,
-          }],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true,
-              title: {
-                display: true,
-                text: 'XP',
-                font: { family: 'Lato' },
-                color: '#22252a',
+      // Main Chart
+      if (progressChart.value) {
+        const ctx = progressChart.value.getContext('2d');
+        progressChart.value.chart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels.length ? labels : ['No Data'],
+            datasets: [{
+              label: 'XP Earned',
+              data: xpData.length ? xpData : [0],
+              borderColor: '#fe572a',
+              backgroundColor: (context) => {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, 150);
+                gradient.addColorStop(0, 'rgba(254, 87, 42, 0.5)');
+                gradient.addColorStop(1, 'rgba(254, 87, 42, 0)');
+                return gradient;
               },
-              ticks: { color: '#22252a', font: { family: 'Lato' } },
-            },
-            x: {
-              max: labels.length ? labels.length - 1 : 0, // End at last data point
-              title: {
-                display: true,
-                text: 'Completed Challenges',
-                font: { family: 'Lato' },
-                color: '#22252a',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 0,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+              x: {
+                easing: 'easeInOutQuad',
+                duration: 1000,
+                from: 0,
               },
-              ticks: { color: '#22252a', font: { family: 'Lato' } },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'XP',
+                  font: { family: 'Lato' },
+                  color: '#22252a',
+                },
+                ticks: { color: '#22252a', font: { family: 'Lato' } },
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: `Completed Challenges (${labels.join(', ') || 'None'})`,
+                  font: { family: 'Lato' },
+                  color: '#22252a',
+                },
+                ticks: { color: '#22252a', font: { family: 'Lato' } },
+              },
+            },
+            plugins: {
+              legend: {
+                labels: { font: { family: 'Lato' }, color: '#22252a' },
+              },
             },
           },
-          plugins: {
-            legend: {
-              labels: { font: { family: 'Lato' }, color: '#22252a' },
+        });
+      }
+
+      // Modal Chart
+      if (modalProgressChart.value) {
+        const modalCtx = modalProgressChart.value.getContext('2d');
+        modalProgressChart.value.chart = new Chart(modalCtx, {
+          type: 'line',
+          data: {
+            labels: labels.length ? labels : ['No Data'],
+            datasets: [{
+              label: 'XP Earned',
+              data: xpData.length ? xpData : [0],
+              borderColor: '#fe572a',
+              backgroundColor: (context) => {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+                gradient.addColorStop(0, 'rgba(254, 87, 42, 0.5)');
+                gradient.addColorStop(1, 'rgba(254, 87, 42, 0)');
+                return gradient;
+              },
+              fill: true,
+              tension: 0.4,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'XP',
+                  font: { family: 'Lato' },
+                  color: '#22252a',
+                },
+                ticks: { color: '#22252a', font: { family: 'Lato' } },
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: `Completed Challenges (${labels.join(', ') || 'None'})`,
+                  font: { family: 'Lato' },
+                  color: '#22252a',
+                },
+                ticks: { color: '#22252a', font: { family: 'Lato' } },
+              },
+            },
+            plugins: {
+              legend: {
+                labels: { font: { family: 'Lato' }, color: '#22252a' },
+              },
             },
           },
-        },
-      });
-
-      // Set dynamic width
-      progressChart.value.parentElement.style.width = `${chartWidth}px`;
+        });
+      }
     };
 
     return {
@@ -971,19 +1108,30 @@ export default {
       feedback,
       verificationResult,
       progressChart,
+      modalProgressChart,
+      showFeedbackModal,
+      selectedFeedback,
+      showChartModal,
       currentPage,
       totalPages,
       paginatedUpcomingChallenges,
+      pastCurrentPage,
+      pastTotalPages,
+      paginatedPastChallenges,
       nextChallengeId,
       submitForm,
       startChallenge,
       submitChallenge,
       handleFeedbackResponse,
       retrySubmission,
+      fetchChallengeFeedback,
+      closeFeedbackModal,
       dismissNotification,
       showLockedMessage,
       prevPage,
       nextPage,
+      prevPastPage,
+      nextPastPage,
     };
   },
 };
@@ -1024,19 +1172,23 @@ export default {
 
 /* Chart Container */
 .chart-container {
-  width: fit-content;
-  max-width: 100%;
+  width: 100%;
 }
 
 /* Markdown Styles */
 .prose {
   max-width: none;
 }
-.prose h1, .prose h2, .prose h3, .prose h4 {
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
   font-family: 'Lato', sans-serif;
   color: #22252a;
 }
-.prose p, .prose ul, .prose ol {
+.prose p,
+.prose ul,
+.prose ol {
   font-family: 'Lato', sans-serif;
   color: #22252a;
 }
@@ -1052,7 +1204,8 @@ export default {
   .text-xl {
     font-size: 1.125rem;
   }
-  input, textarea {
+  input,
+  textarea {
     font-size: 0.9rem;
   }
 }

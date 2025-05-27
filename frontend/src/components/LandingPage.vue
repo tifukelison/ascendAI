@@ -114,7 +114,7 @@
           Finally, a tool to help you learn your skill on the job.
         </h1>
         <p class="font-lato text-lg md:text-xl mb-8 max-w-2xl mx-auto leading-relaxed text-gray-700">
-          Tell us the skill you wan learn and your goal (wetin you wan use am do) — and we'll give you real-world challenges to complete. As you dey run am, you go dey build confidence, portfolio — and sense.
+          Tell us the skill you want to learn and your goal (wetin you wan use am do) — and we'll give you real-world challenges to complete. As you start completing challenges (you go dey build confidence), your portfolio, and experience.
         </p>
         <!-- Product Image -->
         <img
@@ -123,7 +123,7 @@
           class="w-full max-w-3xl mx-auto mb-8"
         />
         <p class="font-lato text-lg md:text-xl mb-8 max-w-2xl mx-auto leading-relaxed text-gray-700">
-          By the time you finish this sentence, 11+ people like you don already get work because dem no just dey learn — dem dey show working daily.
+          By the time you finish this sentence, 11+ people like will already be hired because they don't just learn — dem dey show working daily.
         </p>
         <div class="flex flex-col sm:flex-row justify-center gap-4">
           <router-link
@@ -151,25 +151,25 @@
           <div class="text-center p-6 rounded-xl shadow-sm bg-white">
             <h3 class="text-xl font-bold mb-2 font-crimson-pro">Learn by Doing</h3>
             <p class="font-lato text-base text-gray-600">
-              No long story — na real work we go give you. You go learn the skill by actually doing am, like say you dey on the job already.
+              No long stories, we give you real work. You'll learn the skill by actually doing it, like say you dey on the job already.
             </p>
           </div>
           <div class="text-center p-6 rounded-xl shadow-sm bg-white">
             <h3 class="text-xl font-bold mb-2 font-crimson-pro">Build a Job-Ready Portfolio</h3>
             <p class="font-lato text-base text-gray-600">
-              As you dey complete challenges, you dey gather proof — proof say you sabi, proof say you dey deliver. Na this kind thing dey open doors.
+              As you complete challenges (you dey gather proof). Proof that you know what you're doing. Proof that you deliver. Na this kind thing dey open doors.
             </p>
           </div>
           <div class="text-center p-6 rounded-xl shadow-sm bg-white">
             <h3 class="text-xl font-bold mb-2 font-crimson-pro">Stay Accountable Without Pressure</h3>
             <p class="font-lato text-base text-gray-600">
-              Go at your own pace — nobody go stress you. But the leaderboard go still dey show who dey run am back to back, so you fit ginger yourself and stay on track.
+              Go at your own pace — nobody will stress you. But the leaderboard will show you who's at the top of their game, so you fit ginger yourself and stay on track.
             </p>
           </div>
           <div class="text-center p-6 rounded-xl shadow-sm bg-white">
             <h3 class="text-xl font-bold mb-2 font-crimson-pro">Get Noticed, Get Hired</h3>
             <p class="font-lato text-base text-gray-600">
-              People wey use Ascendia dey land roles because dem dey show working — no be just talk, na action we dey push. Do the work, and the work go find you.
+              People who use Ascendia land roles because they  show working (not just talk), na action we dey push. Do the work, and the work will find you.
             </p>
           </div>
         </div>
@@ -180,7 +180,7 @@
     <section class="py-16 px-6 md:px-12 relative z-10 section text-[#1b1b1b]">
       <div class="max-w-5xl mx-auto">
         <h2 class="text-3xl md:text-4xl font-crimson-pro font-bold text-center mb-12 text-gray-800">
-          How E Dey Work
+          How It Works
         </h2>
         <div
           class="grid grid-cols-1 md:grid-cols-3 gap-8 relative before:absolute before:inset-0 before:h-0.5 before:bg-gray-200 before:top-1/2 before:-translate-y-1/2 before:md:block before:hidden"
@@ -189,9 +189,9 @@
             <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-[#fe572a] text-white flex items-center justify-center text-2xl">
               <i class="fas fa-lightbulb"></i>
             </div>
-            <h3 class="text-xl font-bold mb-2 font-crimson-pro">Tell Us Wetin You Wan Sabi</h3>
+            <h3 class="text-xl font-bold mb-2 font-crimson-pro">Tell Us What You Want to Learn / Upskill</h3>
             <p class="font-lato text-base text-gray-600">
-              For onboarding, just yarn the skill you wan learn and your goal — na from there we go customize everything for you.
+              For onboarding, just tell us the skill you want to learn and your goal (na from there we go customize everything for you.)
             </p>
           </div>
           <div class="p-6 rounded-xl shadow-sm text-center relative z-10 bg-white">
@@ -200,7 +200,7 @@
             </div>
             <h3 class="text-xl font-bold mb-2 font-crimson-pro">Enter Your Dashboard</h3>
             <p class="font-lato text-base text-gray-600">
-              From here, you fit navigate everything — challenges. Na your control center be this.
+              From here, you'll navigate everything — challenges, courses, jobs, and events. Na your control center be this.
             </p>
           </div>
           <div class="p-6 rounded-xl shadow-sm text-center relative z-10 bg-white">
@@ -209,7 +209,7 @@
             </div>
             <h3 class="text-xl font-bold mb-2 font-crimson-pro">Start Real Challenges</h3>
             <p class="font-lato text-base text-gray-600">
-              We go generate tasks based on your skill and goal — no be theory, na practical work wey fit land you job if you run am well.
+              We will generate challenges based on your skill and goal (no theory, na practical work). You'll land a job in no time if you practice well.
             </p>
           </div>
         </div>
@@ -223,10 +223,10 @@
           What we're actually doing.
         </h2>
         <p class="font-lato text-2xl md:text-3xl font-semibold text-center text-gray-800 mb-10 leading-snug">
-          Okay, listen up. We know that you are a person dedicated to achieving their goals — heck everyone is — but sometimes people fall off track. They lack the motivation, they don't know what to do. Everything just seems so complex and unattainable. We're here to fix that. By telling us the skill you want to learn, your goal for that skill — whether it be lead generation, getting clients, increased expertise — we give you challenges to accomplish that specific goal.
+          Okay, listen up. We know you are dedicated to being good at what you do — heck everyone is — but sometimes people fall off track. They lack the motivation to continue, they don't know what to do. Everything just seems so complex and unattainable. We're here to fix that. By telling us the skill you want to learn, your goal for that skill — whether it be lead generation, getting clients, or increasing your expertise — we give you challenges to accomplish that specific goal.
         </p>
         <h3 class="text-2xl md:text-3xl font-crimson-pro font-bold text-center mb-8 text-[#1b1b1b]">
-          Sound's like you?
+          Does that sound like something you want?
         </h3>
         <router-link
           to="/signup"
