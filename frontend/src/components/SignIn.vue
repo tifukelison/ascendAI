@@ -162,7 +162,7 @@ export default {
     const showPassword = ref(false);
     const isLoading = ref(false);
     const errorMessage = ref("");
-    const isDarkMode = ref(true); // Add dark mode state
+    const isDarkMode = ref(false); // Add dark mode state
     const router = useRouter();
 
     const logos = {

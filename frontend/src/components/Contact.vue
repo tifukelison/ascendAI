@@ -1,59 +1,51 @@
 <template>
-  <div :class="['min-h-screen flex flex-col relative', isDarkMode ? 'bg-[#0a0b0b]' : 'bg-white']">
+  <div class="min-h-screen flex flex-col relative bg-[#f8fcf8]">
     <!-- Background Grid -->
-    <div :class="['absolute inset-0 pointer-events-none z-0 opacity-70', isDarkMode ? 'bg-grid-pattern-dark' : 'bg-grid-pattern']"></div>
+    <div class="absolute inset-0 pointer-events-none z-0 opacity-70 bg-grid-pattern"></div>
 
-    <!-- Navigation Bar -->
-    <header
-      :class="['border-b py-4 px-6 md:px-12 sticky top-0 backdrop-blur-sm z-50', isDarkMode ? 'bg-black/90 border-gray-700' : 'bg-white/90 border-gray-200/80']"
-    >
+    <!-- Floating Header Box -->
+    <header class="mt-6 mx-auto w-full max-w-6xl rounded-xl shadow-md border bg-white/90 border-gray-200/80 py-3 px-3 sm:px-6 md:px-12 z-50">
       <nav class="flex items-center justify-between">
         <!-- Home Link -->
         <router-link
           to="/"
-          :class="['font-lato font-bold transition-colors duration-200 flex items-center gap-2', isDarkMode ? 'text-white hover:text-gray-300' : 'text-gray-600 hover:text-gray-900']"
+          class="font-lato font-bold transition-colors duration-200 flex items-center gap-2 text-gray-600 hover:text-gray-900"
         >
           <i class="fas fa-chevron-left"></i>
           Back to Home
         </router-link>
-
-        <!-- Dark Mode Toggle -->
-        <button @click="toggleDarkMode" class="focus:outline-none">
-          <i v-if="isDarkMode" class="fas fa-sun w-6 h-6 text-white"></i>
-          <i v-else class="fas fa-moon w-6 h-6 text-gray-600"></i>
-        </button>
       </nav>
     </header>
 
     <!-- Contact Section -->
-    <section :class="['flex-grow flex items-center justify-center px-6 md:px-12 py-10 md:py-32 relative z-10', isDarkMode ? 'text-white' : 'text-black']">
-      <div class="max-w-3xl text-center">
+    <section class="flex-grow flex items-center justify-center px-6 md:px-12 py-10 md:py-20 relative z-10 section text-[#1b1b1b]">
+      <div class="max-w-3xl w-full text-center flex flex-col items-center">
         <h1 class="font-crimson-pro text-4xl sm:text-5xl md:text-6xl font-bold mb-6">
           Got Questions? Let's Chat! 📞
         </h1>
-        <p :class="['font-lato text-lg md:text-xl mb-8', isDarkMode ? 'text-gray-300' : 'text-gray-600']">
+        <p class="font-lato text-lg md:text-xl mb-8 text-gray-700">
           Yeah, you. The one with the burning questions. We're all ears and ready to help. Drop us a line, and let's make magic happen.
         </p>
 
         <!-- Contact Form -->
-        <form @submit.prevent="handleSubmit" class="space-y-4">
+        <form @submit.prevent="handleSubmit" class="space-y-4 w-full">
           <input
             type="text"
             placeholder="Your Name"
             required
-            :class="['w-full px-4 py-3 rounded-lg', isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700']"
+            class="w-full px-4 py-3 rounded-lg bg-gray-100 text-gray-700"
           />
           <input
             type="email"
             placeholder="Your Email"
             required
-            :class="['w-full px-4 py-3 rounded-lg', isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700']"
+            class="w-full px-4 py-3 rounded-lg bg-gray-100 text-gray-700"
           />
           <textarea
             placeholder="Your Message"
             rows="5"
             required
-            :class="['w-full px-4 py-3 rounded-lg', isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700']"
+            class="w-full px-4 py-3 rounded-lg bg-gray-100 text-gray-700"
           ></textarea>
           <button
             type="submit"
@@ -65,13 +57,13 @@
 
         <!-- Address and Social Media -->
         <div class="mt-12">
-          <p :class="['font-lato text-base', isDarkMode ? 'text-gray-400' : 'text-gray-500']">
+          <p class="font-lato text-base text-gray-500">
             Visit us at our lair: Bamenda
           </p>
           <div class="flex justify-center gap-6 mt-6">
-            <a href="#" :class="['hover:text-[#fe572a]', isDarkMode ? 'text-gray-400' : 'text-gray-300']"><i class="fab fa-twitter"></i></a>
-            <a href="#" :class="['hover:text-[#fe572a]', isDarkMode ? 'text-gray-400' : 'text-gray-300']"><i class="fab fa-facebook"></i></a>
-            <a href="#" :class="['hover:text-[#fe572a]', isDarkMode ? 'text-gray-400' : 'text-gray-300']"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="hover:text-[#fe572a] text-gray-300"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="hover:text-[#fe572a] text-gray-300"><i class="fab fa-facebook"></i></a>
+            <a href="#" class="hover:text-[#fe572a] text-gray-300"><i class="fab fa-instagram"></i></a>
           </div>
         </div>
       </div>
@@ -82,22 +74,7 @@
 <script>
 export default {
   name: "Contact",
-  props: {
-    darkMode: {
-      type: Boolean,
-      default: true,
-    },
-  },
-  data() {
-    return {
-      isDarkMode: this.darkMode,
-    };
-  },
   methods: {
-    toggleDarkMode() {
-      this.isDarkMode = !this.isDarkMode;
-      this.$emit('update:darkMode', this.isDarkMode);
-    },
     handleSubmit() {
       alert("Message sent! We'll get back to you faster than a ninja on a sugar rush. 🥷");
     },
@@ -112,13 +89,21 @@ export default {
   background-size: 20px 20px;
 }
 
-.bg-grid-pattern-dark {
-  background-image: radial-gradient(circle, #333333 1px, transparent 1px);
-  background-size: 20px 20px;
-}
-
 /* Font Awesome for Icons */
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css");
+
+/* Responsive Typography */
+@media (max-width: 640px) {
+  .text-6xl {
+    font-size: 2.5rem;
+  }
+  .text-4xl {
+    font-size: 1.875rem;
+  }
+  .text-3xl {
+    font-size: 1.5rem;
+  }
+}
 
 /* Custom Fonts */
 .font-lato {

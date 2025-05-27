@@ -173,7 +173,7 @@ export default {
     const password = ref("");
     const showPassword = ref(false);
     const isLoading = ref(false);
-    const isDarkMode = ref(true); // Add dark mode state
+    const isDarkMode = ref(false); // Add dark mode state
     const passwordValidationMessage = ref(
       "Password must be at least 6 characters with a capital letter and number"
     );
