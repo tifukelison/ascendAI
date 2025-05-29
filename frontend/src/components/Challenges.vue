@@ -45,7 +45,7 @@
       </div>
     </div>
 
-    <div class="container w-full px-2 py-6 lg:px-4 relative z-10">
+    <div class="container w-full px-4 py-6 lg:px-4 relative z-10 overflow-x-hidden">
       <!-- Notification Popup -->
       <div
         v-if="showNotification"
@@ -137,13 +137,13 @@
       </div>
 
       <!-- Challenges Section -->
-      <div v-if="preferencesSet && challengesGenerated" class="flex flex-col lg:flex-row lg:gap-8">
+      <div v-if="preferencesSet && challengesGenerated" class="flex flex-col gap-8">
         <!-- Main Challenges Content -->
-        <div class="flex-1">
+        <div class="flex flex-col gap-8">
           <!-- Progress and Progress Over Time Section -->
           <div class="flex flex-col lg:flex-row gap-8 mb-8">
             <!-- Progress Section -->
-            <div class="p-6 rounded-lg border border-gray-200 shadow-sm lg:w-1/3">
+            <div class="p-6 rounded-lg border border-gray-200 shadow-sm w-full lg:w-1/3">
               <h2 class="font-crimson-pro text-3xl text-gray-800 mb-4">
                 Your Progress, {{ username }}
               </h2>
@@ -197,6 +197,9 @@
                   >
                     Accept/Start
                   </button>
+                  <p class="font-lato text-sm text-gray-600 mt-2">
+                      Currently, challenge submissions are textbased. You can submit your work as text or code.
+                    </p>
                 </div>
                 <div v-else>
                   <p class="font-lato text-sm text-gray-600 mb-2">Started: {{ startTime }}</p>

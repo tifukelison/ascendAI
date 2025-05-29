@@ -13,12 +13,12 @@ export async function generateChallenges(userId, focusSkill, level, goal, freque
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
       generationConfig: {
-        maxOutputTokens: 1500,
+        maxOutputTokens: 3000,
         temperature: 0.8,
       },
     });
 
-    const prompt = `Generate 10 unique challenges for ${focusSkill} at ${level} level, aligned with the goal "${goal}". Each challenge should take 15-30 minutes, include clear instructions, a resource link, an objective tying back to the goal, and an XP value (15-30 XP based on difficulty). Output ONLY the JSON array as a raw string, with no additional text, no Markdown, no code blocks (e.g., no \`\`\`json or \`\`\`), and no explanations before or after. The format of each challenge in the array must include: description, objective, estimated_time, level, and xp_value.`;
+    const prompt = `Generate 30 unique challenges for ${focusSkill} at ${level} level, aligned with the goal "${goal}". Each challenge should take a considerate amount of time, not more than two hours, include clear instructions, an objective tying back to the goal, and an XP value (not more than 200 based on difficulty). Output ONLY the JSON array as a raw string, with no additional text, no Markdown, no code blocks (e.g., no \`\`\`json or \`\`\`), and no explanations before or after. The format of each challenge in the array must include: description, objective, estimated_time, level, and xp_value.`;
 
     const result = await model.generateContent(prompt);
     let responseText = result.response.text().trim();
@@ -100,12 +100,12 @@ export async function provideChallengeFeedback(challenge, userSubmission) {
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
       generationConfig: {
-        maxOutputTokens: 500,
+        maxOutputTokens: 1500,
         temperature: 0.8,
       },
     });
 
-    const prompt = `You are an instructor reviewing a submission for a challenge. The challenge is: "${challenge.description}" with objective: "${challenge.objective}". The submission is: "${userSubmission}". Provide detailed feedback, including whether it meets requirements, errors or improvements needed, and next steps. Output as plain text with Markdown formatting (e.g., **bold**, *italic*, - lists).`;
+    const prompt = `You are an instructor reviewing a submission for a challenge. The challenge is: "${challenge.description}" with objective: "${challenge.objective}". The submission is: "${userSubmission}". Provide detailed feedback, including whether it meets requirements, errors or improvements needed, and next steps. You are talking directly to the user, so make sure the address them in first person. Output as plain text with Markdown formatting (e.g., **bold**, *italic*, - lists).`;
 
     const result = await model.generateContent(prompt);
     return result.response.text();

@@ -46,7 +46,16 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const auth = getAuth();
-  const user = auth.currentUser;
+
+  // Wait for Firebase to confirm the user's authentication state
+  const checkAuthState = new Promise((resolve) => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      unsubscribe(); // Unsubscribe from the listener after getting the state
+      resolve(user);
+    });
+  });
+
+  const user = await checkAuthState;
 
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (!user) {
