@@ -8,44 +8,11 @@
       <div class="w-12 h-12 border-4 border-gray-200 border-t-[#fe572a] rounded-full animate-spin"></div>
     </div>
 
-    <!-- Notification Popup -->
-    <div
-      v-if="showNotification"
-      class="fixed bottom-4 right-4 max-w-sm p-4 rounded-xl shadow-lg bg-white border border-gray-200 animate-slide-in z-[10000]"
-      :class="notificationType === 'success' ? 'border-green-200' : 'border-red-200'"
-    >
-      <div class="flex items-start">
-        <svg
-          v-if="notificationType === 'success'"
-          class="w-6 h-6 text-green-500 mr-2"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-        <svg
-          v-else
-          class="w-6 h-6 text-red-500 mr-2"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-        <p class="font-lato text-gray-800">{{ notificationMessage }}</p>
-        <button @click="dismissNotification" class="ml-2 text-gray-500 hover:text-gray-700">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-    </div>
-
     <div class="container w-full px-2 py-6 lg:px-4 relative z-10">
-      <h2 class="font-crimson-pro text-3xl text-gray-800 mb-8 text-center">
+      <h2 class="font-crimson-pro text-3xl text-gray-800 mb-2 text-center">
         Global Leaderboard
       </h2>
+      <p class="font-lato text-center text-gray-600 mb-8">See who's crushing their goals.</p>
 
       <!-- Filter Section -->
       <div class="filter-section mb-8 p-6 rounded-lg border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
@@ -79,35 +46,37 @@
         </button>
       </div>
 
-      <!-- User Preview Section -->
+      <!-- Current User Preview Section -->
       <div class="user-preview mb-8 p-6 rounded-lg border border-gray-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-4">
           <img
-            :src="topUser.profilePictureBase64 || 'https://via.placeholder.com/60'"
+            v-if="currentUser.profilePictureBase64"
+            :src="currentUser.profilePictureBase64"
             alt="User Profile"
             class="w-16 h-16 rounded-full border-2 border-white shadow-md object-cover"
           />
+          <i v-else class="fas fa-user-circle text-4xl text-gray-400"></i>
           <div>
-            <p class="font-lato font-bold text-gray-800">{{ topUser.name || 'User' }}</p>
+            <p class="font-lato font-bold text-gray-800">{{ currentUser.name || 'User' }}</p>
             <p class="font-lato text-sm text-gray-600 flex items-center">
-              <span class="fi mr-2" :class="getCountryFlag(topUser.location)"></span>
-              {{ topUser.location || 'N/A' }}
+              <span class="fi mr-2" :class="getCountryFlag(currentUser.location)"></span>
+              {{ currentUser.location || 'N/A' }}
             </p>
           </div>
         </div>
         <div class="border-l border-gray-200 h-12 hidden sm:block"></div>
         <div class="text-center">
           <p class="font-lato text-gray-800">XP</p>
-          <p class="font-lato font-bold text-[#fe572a]">{{ topUser.xp || 0 }}</p>
+          <p class="font-lato font-bold text-[#fe572a]">{{ currentUser.xp || 0 }}</p>
         </div>
         <div class="border-l border-gray-200 h-12 hidden sm:block"></div>
         <div class="text-center">
-          <p class="font-lato text-gray-800">Want to be in Top 10?</p>
-          <button
+          <router-link
+            to="/dashboard/challenges"
             class="bg-[#fe572a] text-white font-lato font-bold px-4 py-2 rounded-lg shadow hover:bg-[#ff8c63] hover:-translate-y-1 transition-all duration-200 mt-2"
           >
-            Start Growing with Ascendia
-          </button>
+            Go to Challenges
+          </router-link>
         </div>
       </div>
 
@@ -120,8 +89,8 @@
       </div>
 
       <!-- Leaderboard Table -->
-      <div v-else class="leaderboard-table p-6 rounded-lg border border-gray-200 shadow-sm">
-        <div class="grid grid-cols-6 gap-4 font-lato font-bold text-gray-800 mb-4">
+      <div v-else class="leaderboard-table p-6 rounded-lg border border-gray-200 shadow-sm overflow-x-auto">
+        <div class="grid grid-cols-7 gap-4 font-lato font-bold text-gray-800 mb-4 min-w-[600px]">
           <div>Ranking</div>
           <div class="col-span-2">Profile</div>
           <div>Country</div>
@@ -131,25 +100,25 @@
         <div
           v-for="(user, index) in paginatedLeaderboard"
           :key="user.id"
-          class="grid grid-cols-6 gap-4 items-center p-4 rounded-lg"
+          class="grid grid-cols-7 gap-4 items-center p-4 rounded-lg min-w-[600px]"
           :class="{ 'bg-gray-50': index % 2 === 0, 'bg-white': index % 2 !== 0, 'hover:bg-gray-100 cursor-pointer': true }"
           @click="showUserProfile(user)"
         >
           <!-- Ranking -->
           <div class="flex items-center">
-            <span v-if="index === 0" class="fas fa-medal text-yellow-400 mr-2"></span>
-            <span v-else-if="index === 1" class="fas fa-medal text-gray-400 mr-2"></span>
-            <span v-else-if="index === 2" class="fas fa-medal text-orange-400 mr-2"></span>
-            <span v-else class="font-lato text-gray-800">#{{ index + 1 + (currentPage - 1) * itemsPerPage }}</span>
+            <span class="font-lato text-gray-800">#{{ index + 1 + (currentPage - 1) * itemsPerPage }} </span>
+             <span v-if="index < 3 && currentPage === 1" :class="getMedalClass(index)"></span>
           </div>
 
           <!-- Profile -->
           <div class="col-span-2 flex items-center gap-4">
             <img
-              :src="user.profilePictureBase64 || 'https://via.placeholder.com/40'"
+              v-if="user.profilePictureBase64"
+              :src="user.profilePictureBase64"
               alt="User Profile"
               class="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover"
             />
+            <i v-else class="fas fa-user-circle text-2xl text-gray-400"></i>
             <div>
               <p class="font-lato font-bold text-gray-800">{{ user.name || 'Unknown' }}</p>
               <p class="font-lato text-sm text-gray-600">{{ user.focusSkill || 'N/A' }}</p>
@@ -166,12 +135,26 @@
           <!-- Skills -->
           <div class="flex flex-wrap gap-2 justify-center">
             <span
-              v-for="skill in user.skills"
-              :key="skill"
-              class="bg-[#fe572a] text-white font-lato text-xs px-2 py-1 rounded-full"
+              class="bg-[#fe572a] text-white font-lato text-xs px-2 py-1 rounded-full whitespace-nowrap"
             >
-              {{ skill }}
+              {{ user.focusSkill }}
             </span>
+            <span
+              v-if="user.skills.length > 1"
+              @click.stop="toggleSkills(user.id)"
+              class="bg-gray-200 text-gray-800 font-lato text-xs px-2 py-1 rounded-full cursor-pointer whitespace-nowrap"
+            >
+              +{{ user.skills.length - 1 }}
+            </span>
+            <div v-if="expandedSkills[user.id]" class="flex flex-wrap gap-2 mt-2">
+              <span
+                v-for="(skill, i) in user.skills.slice(1)"
+                :key="i"
+                class="bg-gray-200 text-gray-800 font-lato text-xs px-2 py-1 rounded-full"
+              >
+                {{ skill }}
+              </span>
+            </div>
           </div>
 
           <!-- XP -->
@@ -206,7 +189,7 @@
       <transition name="slide-right">
         <div
           v-if="showProfileSidebar"
-          class="profile-sidebar fixed top-0 right-0 h-full w-full sm:w-80 bg-white shadow-lg z-[1000] p-6 flex flex-col items-center"
+          class="profile-sidebar fixed top-0 right-0 h-full w-full sm:w-80 bg-white shadow-lg z-[1000] p-6 flex flex-col items-start"
           @click.self="closeProfileSidebar"
         >
           <div class="profile-header flex justify-between items-center w-full mb-6">
@@ -217,57 +200,35 @@
               </svg>
             </button>
           </div>
-          <div v-if="selectedUser" class="profile-content flex flex-col items-center w-full">
+          <div v-if="selectedUser" class="profile-content flex flex-col items-start w-full">
             <img
-              :src="selectedUser.profilePictureBase64 || 'https://via.placeholder.com/80'"
+              v-if="selectedUser.profilePictureBase64"
+              :src="selectedUser.profilePictureBase64"
               alt="User Profile"
               class="w-20 h-20 rounded-full border-2 border-white shadow-md object-cover mb-4"
             />
+            <i v-else class="fas fa-user-circle text-4xl text-gray-400 mb-4"></i>
             <p class="font-lato font-bold text-gray-800 text-lg">{{ selectedUser.name || 'Unknown' }}</p>
-            <p class="font-lato text-sm text-gray-600 flex items-center mb-4">
-              <span class="fi mr-2" :class="getCountryFlag(selectedUser.location)"></span>
-              {{ selectedUser.location || 'N/A' }}
-            </p>
+            <p class="font-lato text-sm text-gray-600 mb-2">{{ selectedUser.focusSkill || 'N/A' }}</p>
+            <p v-if="selectedUser.about" class="font-lato text-gray-600 text-sm mb-4">{{ selectedUser.about }}</p>
             <p class="font-lato text-gray-800 mb-2"><span class="font-semibold">XP:</span> {{ selectedUser.xp || 0 }}</p>
-            <p class="font-lato text-gray-800 mb-2"><span class="font-semibold">Focus Skill:</span> {{ selectedUser.focusSkill || 'N/A' }}</p>
-            <p v-if="selectedUser.about" class="font-lato text-gray-600 text-sm text-center mb-4">{{ selectedUser.about }}</p>
-            <div class="flex gap-4 mb-4">
-  <a
-    v-if="selectedUser.social?.twitter"
-    :href="selectedUser.social.twitter"
-    target="_blank"
-    class="text-gray-600 hover:text-[#fe572a]"
-  >
-    <i class="fab fa-x-twitter text-xl"></i>
-    <span v-if="selectedUser.social?.twitterFollowers" class="ml-1 text-xs">{{ formatNumber(selectedUser.social.twitterFollowers) }}</span>
-  </a>
-  <a
-    v-if="selectedUser.social?.linkedin"
-    :href="selectedUser.social.linkedin"
-    target="_blank"
-    class="text-gray-600 hover:text-[#fe572a]"
-  >
-    <i class="fab fa-linkedin text-xl"></i>
-    <span v-if="selectedUser.social?.linkedinFollowers" class="ml-1 text-xs">{{ formatNumber(selectedUser.social.linkedinFollowers) }}</span>
-  </a>
-  <a
-    v-if="selectedUser.social?.github"
-    :href="selectedUser.social.github"
-    target="_blank"
-    class="text-gray-600 hover:text-[#fe572a]"
-  >
-    <i class="fab fa-github text-xl"></i>
-    <span v-if="selectedUser.social?.githubFollowers" class="ml-1 text-xs">{{ formatNumber(selectedUser.social.githubFollowers) }}</span>
-  </a>
-</div>
-            <div class="flex flex-wrap gap-2 justify-center">
+            <div class="flex flex-wrap gap-2 mb-4">
               <span
                 v-for="skill in selectedUser.skills"
                 :key="skill"
-                class="bg-[#fe572a] text-white font-lato text-xs px-2 py-1 rounded-full"
+                class="bg-[#fe572a] text-[#242424] font-lato text-xs px-2 py-1 rounded-full"
               >
                 {{ skill }}
               </span>
+            </div>
+            <div class="mt-auto w-full">
+              <h3 class="font-lato font-bold text-[#242424] text-lg mb-2">Want to become a top achiever?</h3>
+              <router-link
+                to="/dashboard/challenges"
+                class="bg-[#fe572a] text-white font-lato font-bold px-4 py-2 rounded-lg shadow hover:bg-[#ff8c63] hover:-translate-y-1 transition-all duration-200"
+              >
+                Go to Challenges
+              </router-link>
             </div>
           </div>
           <div v-else class="profile-content">
@@ -283,6 +244,8 @@
 import { ref, computed, onMounted } from 'vue';
 import { collection, query, orderBy, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useRouter } from 'vue-router';
+import { getAuth } from 'firebase/auth';
 
 export default {
   name: 'Leaderboard',
@@ -300,24 +263,38 @@ export default {
     const expandedSkills = ref({});
     const currentUser = ref({
       profilePictureBase64: null,
-      name: 'User',
-      location: null,
+      name: '',
+      location: '',
       xp: 0,
     });
-    const topUser = ref({});
+    const router = useRouter();
+    const auth = getAuth();
 
     // Pagination
     const currentPage = ref(1);
-    const itemsPerPage = ref(10); // Define and initialize itemsPerPage
+    const itemsPerPage = ref(10);
 
-    // Mock available skills and countries (replace with actual data from Firestore if available)
-    const availableSkills = ref(['JavaScript', 'Python', 'Java', 'Web Development', 'Data Science']);
-    const availableCountries = ref(['USA', 'UK', 'India', 'Brazil', 'Germany']);
+    // Populate available skills and countries from leaderboard data
+    const availableSkills = computed(() => {
+      const skills = new Set();
+      leaderboardData.value.forEach(user => {
+        if (user.focusSkill) skills.add(user.focusSkill);
+      });
+      return Array.from(skills);
+    });
+
+    const availableCountries = computed(() => {
+      const countries = new Set();
+      leaderboardData.value.forEach(user => {
+        if (user.location) countries.add(user.location);
+      });
+      return Array.from(countries);
+    });
 
     // Computed property for filtered leaderboard
     const filteredLeaderboard = computed(() => {
       return leaderboardData.value.filter(user => {
-        const skillMatch = selectedSkill.value === 'All Skills' || user.focusSkill === selectedSkill.value || user.skills.includes(selectedSkill.value);
+        const skillMatch = selectedSkill.value === 'All Skills' || user.focusSkill === selectedSkill.value;
         const locationMatch = selectedLocation.value === 'Worldwide' || user.location === selectedLocation.value;
         return skillMatch && locationMatch;
       });
@@ -361,7 +338,6 @@ export default {
         }
 
         leaderboardData.value = leaderboard;
-        topUser.value = leaderboard[0] || {};
 
         if (leaderboard.length === 0) {
           error.value = 'No users found on the leaderboard. Be the first to join!';
@@ -375,15 +351,26 @@ export default {
       }
     };
 
-    // Fetch current user data (mocked for now, replace with actual auth user)
+    // Fetch current user data
     const fetchCurrentUser = async () => {
-      // Replace with actual auth user fetching logic
-      currentUser.value = {
-        profilePictureBase64: 'https://via.placeholder.com/60',
-        name: 'John Doe',
-        location: 'USA',
-        xp: 1500,
-      };
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          console.warn('No authenticated user found.');
+          return;
+        }
+
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          currentUser.value = { ...userSnap.data() };
+        } else {
+          console.warn('Current user not found in Firestore.');
+        }
+      } catch (err) {
+        console.error('Error fetching current user:', err);
+      }
     };
 
     // Fetch user profile for sidebar
@@ -466,6 +453,23 @@ export default {
       }
     };
 
+    const getMedalClass = (index) => {
+      switch (index) {
+        case 0:
+          return 'fas fa-medal text-yellow-400 mr-2';
+        case 1:
+          return 'fas fa-medal text-gray-400 mr-2';
+        case 2:
+          return 'fas fa-medal text-orange-400 mr-2';
+        default:
+          return '';
+      }
+    };
+
+    const goToChallenges = () => {
+      router.push('/dashboard/challenges');
+    };
+
     onMounted(() => {
       fetchLeaderboard();
       fetchCurrentUser();
@@ -490,7 +494,6 @@ export default {
       availableCountries,
       expandedSkills,
       currentUser,
-      topUser,
       showUserProfile,
       closeProfileSidebar,
       resetFilters,
@@ -501,7 +504,9 @@ export default {
       dismissNotification,
       prevPage,
       nextPage,
-      itemsPerPage, // Ensure itemsPerPage is returned
+      itemsPerPage,
+      getMedalClass,
+      goToChallenges,
     };
   },
 };
@@ -554,8 +559,8 @@ export default {
 }
 
 /* Leaderboard Table */
-.leaderboard-table .grid-cols-6 {
-  grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
+.leaderboard-table .grid-cols-7 {
+  grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr;
 }
 
 /* Responsive Adjustments */
@@ -575,8 +580,8 @@ export default {
   .user-preview .border-l {
     display: none;
   }
-  .leaderboard-table .grid-cols-6 {
-    grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
+  .leaderboard-table .grid-cols-7 {
+    grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr;
   }
   .profile-sidebar {
     width: 100%;

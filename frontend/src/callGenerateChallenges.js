@@ -18,7 +18,7 @@ export async function generateChallenges(userId, focusSkill, level, goal, freque
       },
     });
 
-    const prompt = `Generate 30 unique challenges for ${focusSkill} at ${level} level, aligned with the goal "${goal}". Each challenge should take a considerate amount of time, not more than two hours, include clear instructions, an objective tying back to the goal, and an XP value (not more than 200 based on difficulty). Output ONLY the JSON array as a raw string, with no additional text, no Markdown, no code blocks (e.g., no \`\`\`json or \`\`\`), and no explanations before or after. The format of each challenge in the array must include: description, objective, estimated_time, level, and xp_value.`;
+    const prompt = `Generate 30 unique challenges for ${focusSkill} at ${level} level, aligned with the goal "${goal}". Each challenge should take a considerate amount of time, not more than two hours, include clear instructions, an objective tying back to the goal, and an XP value (not more than 200 based on difficulty). Users are required to submit responses in text-only, not images so the challenges should be ones that can be submitted through text. Output ONLY the JSON array as a raw string, with no additional text, no Markdown, no code blocks (e.g., no \`\`\`json or \`\`\`), and no explanations before or after. The format of each challenge in the array must include: description, objective, estimated_time, level, and xp_value.`;
 
     const result = await model.generateContent(prompt);
     let responseText = result.response.text().trim();
