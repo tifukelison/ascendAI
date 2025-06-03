@@ -29,8 +29,8 @@ export async function generateChallenges(userId, focusSkill, level, goal, freque
     console.log("Cleaned AI model output:", responseText);
     const challenges = JSON.parse(responseText);
 
-    if (!Array.isArray(challenges) || challenges.length !== 10) {
-      throw new Error("Expected an array of 10 challenges");
+    if (!Array.isArray(challenges) || challenges.length !== 30) {
+      throw new Error("Expected an array of 30 challenges");
     }
 
     const scheduledChallenges = scheduleChallenges(challenges, frequency);
