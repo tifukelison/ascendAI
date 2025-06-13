@@ -13,7 +13,7 @@ export async function generateChallenges(userId, focusSkill, level, goal, freque
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
       generationConfig: {
-        maxOutputTokens: 3000,
+        maxOutputTokens: 5000,
         temperature: 0.8,
       },
     });
